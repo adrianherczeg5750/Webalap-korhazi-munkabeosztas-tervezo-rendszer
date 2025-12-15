@@ -22,10 +22,13 @@ public class UserResource {
     @POST
     @Path("/register")
     public Response register(User user) {
-        boolean exist = userRepository.findByUsername(user.username) != null;
-        if (exist) {
+
+        if (userRepository.findByUsername(user.username) != null) {
             return Response.status(Response.Status.CONFLICT).build();
         }
+
+        user.role = "USER";
+
         String hashed;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -36,9 +39,11 @@ public class UserResource {
                     .entity("Hashing error")
                     .build();
         }
+
         user.password = hashed;
         userRepository.save(user);
-        return Response.ok(user).build();
+
+        return Response.ok().build();
     }
 
 }

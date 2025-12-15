@@ -1,6 +1,20 @@
 package com.hospital;
 
-import io.quarkus.hibernate.orm.rest.data.panache.PanacheEntityResource;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import java.util.List;
 
-public interface MyEntityResource extends PanacheEntityResource<MyEntity, Long> {
+@Path("/my-entities")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class MyEntityResource {
+
+    @Inject
+    UserRepository userRepository;
+
+    @GET
+    public List<User> findAll() {
+        return userRepository.listAll();
+    }
 }
