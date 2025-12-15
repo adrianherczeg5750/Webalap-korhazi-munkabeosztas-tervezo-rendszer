@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import {AuthService} from '../services/auth';
 import {FormsModule} from '@angular/forms';
 import {NgIf} from '@angular/common';
-import {response} from 'express';
 import {Router} from '@angular/router';
 
 @Component({
@@ -25,6 +24,7 @@ export class LoginComponent {
     this.authService.login(this.username, this.password).subscribe({
       next: (response) => {
         console.log("Sikeres belépés!", response);
+        this.routes.navigate(['/main-page']);
       },
       error: (err) => {
         this.errorMessage = "Hibás felhasználónév vagy jelszó!";
@@ -33,5 +33,8 @@ export class LoginComponent {
   }
   onClickRegister(){
     this.routes.navigate(['/register']);
+  }
+  navigateToIndex(){
+    this.routes.navigate(['/main-page']);
   }
 }

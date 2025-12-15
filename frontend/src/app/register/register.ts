@@ -24,13 +24,14 @@ export class RegisterComponent {
 
   onRegister(){
     this.authService.register(this.username, this.password).subscribe({
-      next: (response) => {
-        console.log("Sikeres regisztráció!", response);
+      next: () => {
+        console.log("Sikeres regisztráció!");
+        this.router.navigate(['/login']);
       },
-      error: (err) => {
+      error: () => {
         this.errorMessage = "Hibás felhasználónév vagy jelszó!";
       }
-    })
+    });
   }
 
   navigateToLogin(){
