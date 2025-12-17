@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: szakdoga-postgres
+    environment:
+      POSTGRES_DB: szakdoga
+      POSTGRES_USER: szakdoga
+      POSTGRES_PASSWORD: szakdoga
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: szakdoga-backend
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/szakdoga
+      QUARKUS_DATASOURCE_USERNAME: szakdoga
+      QUARKUS_DATASOURCE_PASSWORD: szakdoga
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: szakdoga-frontend
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
