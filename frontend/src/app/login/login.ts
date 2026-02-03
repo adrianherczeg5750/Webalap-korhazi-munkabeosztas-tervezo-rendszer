@@ -25,6 +25,7 @@ export class LoginComponent {
       next: (response) => {
         console.log("Sikeres belépés!", response);
         this.routes.navigate(['/main-page']);
+        localStorage.setItem("Name", this.username);
       },
       error: (err) => {
         this.errorMessage = "Hibás felhasználónév vagy jelszó!";

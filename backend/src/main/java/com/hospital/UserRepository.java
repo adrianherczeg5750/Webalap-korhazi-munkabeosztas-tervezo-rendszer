@@ -10,6 +10,10 @@ public class UserRepository implements PanacheRepository<User> {
         return find("username", username).firstResult();
     }
 
+    public User findById(Long id) {
+        return find("id", id).firstResult();
+    }
+
     public void save(User user) {
         persist(user);
     }

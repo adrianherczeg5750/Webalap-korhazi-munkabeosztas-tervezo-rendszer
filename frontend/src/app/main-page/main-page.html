@@ -1,1 +1,39 @@
-<p>main-page works!</p>
+<div class="main-page">
+  <div class="header-row">
+    <h2>Munkabeosztás</h2>
+
+    <button type="button" (click)="navigateToShiftAdd()">
+      Új beosztás felvitele
+    </button>
+  </div>
+
+  <table class="table table-striped table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>Név</th>
+        <th>Beosztás</th>
+        <th>Kezdés dátuma</th>
+        <th>Kezdés ideje</th>
+        <th>Befejezés dátuma</th>
+        <th>Befejezés ideje</th>
+        <th>Munkaidő (óra:perc)</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngIf="!shifts || shifts.length === 0">
+        <td colspan="7" class="text-center">Nincs még rögzített beosztás.</td>
+      </tr>
+
+      <tr *ngFor="let s of shifts">
+        <td>{{ s.employeeName }}</td>
+        <td>{{ s.role }}</td>
+        <td>{{ s.startAtDate | date:'yyyy.MM.dd' }}</td>
+        <td>{{ (s.startAtTime || '').substring(0,5) }}</td>
+        <td>{{ s.endAtDate | date:'yyyy.MM.dd' }}</td>
+        <td>{{ (s.endAtTime || '').substring(0,5) }}</td>
+        <td>{{ s.workDuration }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
