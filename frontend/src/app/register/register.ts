@@ -18,12 +18,13 @@ import {Router} from '@angular/router';
 export class RegisterComponent {
   username: string = '';
   password: string = '';
+  role: string = '';
   errorMessage: string = '';
 
   constructor(private readonly authService: AuthService, private readonly router: Router) {}
 
   onRegister(){
-    this.authService.register(this.username, this.password).subscribe({
+    this.authService.register(this.username, this.password, this.role).subscribe({
       next: () => {
         console.log("Sikeres regisztráció!");
         this.router.navigate(['/login']);

@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 })
 export class ShiftComponent {
   roles = ['Nappalos', 'Éjszakás', 'Ügyelet'];
-  employeeName = ''; // ✅ ne localStorage-ból itt
+  employeeName = '';
   role = '';
   startAtDate = '';
   startAtTime = '';
@@ -25,7 +25,7 @@ export class ShiftComponent {
     @Inject(PLATFORM_ID) private readonly platformId: Object
   ) {
     if (isPlatformBrowser(this.platformId)) {
-      this.employeeName = localStorage.getItem('Name') ?? '';
+      this.employeeName = localStorage.getItem('username') ?? '';
     }
   }
 
