@@ -18,6 +18,18 @@
       required
       [(ngModel)]="password"
     />
+    <label for="role">Szerepkör</label>
+    <select
+      id="role"
+      name="role"
+      required
+      [(ngModel)]="role"
+    >
+      <option value="" disabled>Válassz szerepkört</option>
+      <option value="ADMIN">ADMIN</option>
+      <option value="MANAGER">MANAGER</option>
+      <option value="EMPLOYEE">EMPLOYEE</option>
+    </select>
     <button type="submit">Regisztrálás</button>
     <button type="button" (click)="navigateToLogin()">Van már fiókod?</button>
   </form>

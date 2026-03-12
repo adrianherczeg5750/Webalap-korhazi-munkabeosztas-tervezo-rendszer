@@ -1,0 +1,121 @@
+package com.hospital;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@ApplicationScoped
+@Transactional
+public class ShiftGenerationService {
+
+    @Inject
+    ShiftRepository shiftRepository;
+
+    @Inject
+    UserRepository userRepository;
+
+   @Inject
+   LeaveRequestRepository leaveRequestRepository;
+
+    public void generateForMonth(String monthString) {
+
+        YearMonth yearMonth = YearMonth.parse(monthString);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
+
+
+        shiftRepository.deleteByDateBetween(start, end);
+        List<User> employees = userRepository.findAllActive().stream()
+                .filter(user -> user.getRole() == User.Role.EMPLOYEE)
+                .collect(Collectors.toList());
+        List<LeaveRequest> approvedLeaves = leaveRequestRepository.findApprovedBetween(start, end);
+
+        Map<Long, Set<LocalDate>> leaveMap = buildLeaveMap(approvedLeaves);
+
+        Map<Long, Integer> hoursWorked = new HashMap<>();
+        for (User user : employees) {
+            hoursWorked.put(user.getId(), 0);
+        }
+
+        LocalDate current = start;
+
+        while (!current.isAfter(end)) {
+
+            for (Shift.ShiftType type : Shift.ShiftType.values()) {
+
+                for (int i = 0; i < 3; i++) {
+
+                    User selected = selectEmployee(employees, leaveMap, hoursWorked, current);
+
+                    if (selected == null) {
+                        throw new RuntimeException("Nem generálható beosztás erre a hónapra!");
+                    }
+
+                    Shift shift = new Shift();
+                    shift.setDate(current);
+                    shift.setType(type);
+                    shift.setEmployee(selected);
+
+                    shiftRepository.save(shift);
+
+                    hoursWorked.put(selected.getId(), hoursWorked.get(selected.getId()) + 8);
+                }
+            }
+
+            current = current.plusDays(1);
+        }
+
+
+        validateMinimumHours(employees, hoursWorked);
+    }
+
+    private Map<Long, Set<LocalDate>> buildLeaveMap(List<LeaveRequest> approvedLeaves) {
+        Map<Long, Set<LocalDate>> leaveMap = new HashMap<>();
+
+        for (LeaveRequest leave : approvedLeaves) {
+
+            Long userId = leave.getEmployee().getId();
+            LocalDate current = leave.getStartDate();
+            LocalDate end = leave.getEndDate();
+
+            while (!current.isAfter(end)) {
+                leaveMap.computeIfAbsent(userId, k -> new java.util.HashSet<>()).add(current);
+                current = current.plusDays(1);
+            }
+        }
+
+        return leaveMap;
+    }
+
+    private User selectEmployee(List<User> employees, Map<Long, Set<LocalDate>> leaveMap, Map<Long, Integer> hoursWorked, LocalDate date) {
+        List<User> candidates = employees.stream()
+                .filter(user -> !leaveMap.getOrDefault(user.getId(), Set.of()).contains(date))
+                .filter(user -> shiftRepository.count("user.id = ?1 and date = ?2", user.getId(), date) == 0)
+                .collect(Collectors.toList());
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        int minHours = candidates.stream()
+                .mapToInt(user -> hoursWorked.get(user.getId()))
+                .min()
+                .orElse(Integer.MAX_VALUE);
+
+        List<User> leastWorkedCandidates = candidates.stream()
+                .filter(user -> hoursWorked.get(user.getId()) == minHours)
+                .collect(Collectors.toList());
+
+        Collections.shuffle(leastWorkedCandidates);
+        return leastWorkedCandidates.get(0);
+    }
+
+    private void validateMinimumHours(List<User> employees,Map<Long, Integer> hoursWorked ) {
+
+    }
+}

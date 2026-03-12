@@ -1,0 +1,39 @@
+<h2>Beosztás felvitele</h2>
+
+<form (ngSubmit)="save()">
+  <div>
+    <label>Név</label>
+    <input type="text" [value]="employeeName" disabled />
+  </div>
+
+  <div>
+    <label>Beosztás</label>
+    <select [(ngModel)]="role" name="role" required>
+      <option value="" disabled>Válassz...</option>
+      <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Kezdési dátum</label>
+    <input type="date" [(ngModel)]="startAtDate" name="startAtDate" required />
+  </div>
+
+  <div>
+    <label>Kezdési óra</label>
+    <input type="time" [(ngModel)]="startAtTime" name="startAtTime" required />
+  </div>
+
+  <div>
+    <label>Befejezési dátum</label>
+    <input type="date" [(ngModel)]="endAtDate" name="endAtDate" required />
+  </div>
+
+  <div>
+    <label>Befejezési óra</label>
+    <input type="time" [(ngModel)]="endAtTime" name="endAtTime" required />
+  </div>
+
+  <button type="submit">Mentés</button>
+  <button type="button" routerLink="/main">Mégse</button>
+</form>

@@ -1,7 +1,6 @@
 package com.hospital;
 
 import jakarta.persistence.*;
-
 @Entity
 @Table(name = "users")
 public class User {
@@ -16,6 +15,27 @@ public class User {
     @Column(nullable = false)
     public String password;
 
+    public enum Role {
+        ADMIN,
+        MANAGER,
+        EMPLOYEE
+    }
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    public String role;
+    public Role role;
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+
+    public Role getRole() {
+        return role;
+    }
 }

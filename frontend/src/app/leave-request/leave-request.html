@@ -1,0 +1,38 @@
+
+
+<div class="leave-request">
+  <h2>Szabadságkérelem benyújtása</h2>
+
+  <div class="card">
+    <div class="row">
+      <label for="type">Típus</label>
+      <select id="type" [(ngModel)]="type" name="type">
+        <option *ngFor="let t of leaveTypes" [ngValue]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label for="startDate">Kezdő dátum</label>
+      <input id="startDate" type="date" [(ngModel)]="startDate" name="startDate" />
+    </div>
+
+    <div class="row">
+      <label for="endDate">Záró dátum</label>
+      <input id="endDate" type="date" [(ngModel)]="endDate" name="endDate" />
+    </div>
+
+    <div class="hint">
+      A kérelem státusza alapból <b>PENDING</b>, amíg a manager el nem bírálja.
+    </div>
+
+    <div class="alert error" *ngIf="errorMsg">{{ errorMsg }}</div>
+    <div class="alert success" *ngIf="successMsg">{{ successMsg }}</div>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="cancel()" [disabled]="saving">Mégse</button>
+      <button type="button" (click)="submit()" [disabled]="saving">
+        {{ saving ? 'Mentés...' : 'Beküldés' }}
+      </button>
+    </div>
+  </div>
+</div>
