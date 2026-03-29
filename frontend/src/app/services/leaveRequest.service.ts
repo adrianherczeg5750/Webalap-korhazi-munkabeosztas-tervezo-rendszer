@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {environment} from '../../../environments/environment';
 
-export type LeaveType = 'VACATION' | 'SICK' | 'UNPAID';
+export type LeaveType = 'PAID' | 'UNPAID';
 
 export interface CreateLeaveRequestDto {
   employeeId: number;

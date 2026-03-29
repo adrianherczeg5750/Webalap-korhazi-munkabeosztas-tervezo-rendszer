@@ -1,0 +1,58 @@
+<div class="leave-request">
+  <h2>Munkavégzési kérelem benyújtása</h2>
+
+  <div class="card">
+    <div class="row">
+      <label for="type">Típus</label>
+      <select id="type" [(ngModel)]="type" name="type">
+        <option *ngFor="let t of workTypes" [ngValue]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+
+    <div *ngIf="type === 'MULTIPLE'">
+      <div class="row">
+        <label for="startDate">Kezdő dátum</label>
+        <input id="startDate" type="date" [(ngModel)]="startDate" name="startDate" />
+      </div>
+
+      <div class="row">
+        <label for="endDate">Záró dátum</label>
+        <input id="endDate" type="date" [(ngModel)]="endDate" name="endDate" />
+      </div>
+    </div>
+
+    <div *ngIf="type === 'SINGLE'">
+      <div class="row">
+        <label for="startDate">Adott Nap</label>
+        <input id="singleDate" type="date" [(ngModel)]="startDate" name="startDate">
+      </div>
+    </div>
+
+    <label for="role">Szerepkör</label>
+    <select
+      id="role"
+      name="role"
+      required
+      [(ngModel)]="role"
+    >
+      <option value="" disabled>Válassz kívánt munkaidőt</option>
+      <option value="MORNING">Délelőtt 00:00 - 08:00</option>
+      <option value="AFTERNOON">Délután 08:00 - 16:00</option>
+      <option value="NIGHT">Éjszaka 16:00 - 23:59</option>
+    </select>
+
+    <div class="hint">
+      A kérelem státusza alapból <b>PENDING</b>, amíg a manager el nem bírálja.
+    </div>
+
+    <div class="alert error" *ngIf="errorMsg">{{ errorMsg }}</div>
+    <div class="alert success" *ngIf="successMsg">{{ successMsg }}</div>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="cancel()" [disabled]="saving">Mégse</button>
+      <button type="button" (click)="submit()" [disabled]="saving">
+        {{ saving ? 'Mentés...' : 'Beküldés' }}
+      </button>
+    </div>
+  </div>
+</div>

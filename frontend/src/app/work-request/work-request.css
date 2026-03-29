@@ -6,12 +6,12 @@
   min-height: 100vh;
 }
 
-.shift-page {
+.leave-request {
   width: 100%;
   max-width: 520px;
 }
 
-h2 {
+.leave-request h2 {
   margin: 0 0 20px;
   font-size: 20px;
   font-weight: 700;
@@ -21,7 +21,7 @@ h2 {
   gap: 10px;
 }
 
-h2::before {
+.leave-request h2::before {
   content: '';
   display: inline-block;
   width: 4px;
@@ -30,82 +30,53 @@ h2::before {
   border-radius: 2px;
 }
 
-form {
-  background: var(--surface);
-  padding: 28px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-form div {
-  display: flex;
-  flex-direction: column;
-}
-
-label {
+label[for="role"] {
+  display: block;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
-  margin-bottom: 5px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  margin: 4px 0 5px;
 }
 
-input,
-select {
+select#role {
+  display: block;
+  width: 100%;
   padding: 9px 11px;
   border-radius: 8px;
   border: 1px solid var(--border);
   font-size: 14px;
-  color: var(--text);
   background: #fff;
+  color: var(--text);
+  margin-bottom: 16px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-input:focus,
-select:focus {
+select#role:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0, 113, 188, 0.14);
 }
 
-input[disabled] {
-  background: var(--primary-light);
-  color: var(--text-muted);
-}
-
-button[type="submit"] {
-  padding: 11px;
+.actions button:not(.ghost) {
+  padding: 9px 20px;
   border: none;
   border-radius: var(--radius);
   background: var(--primary);
   color: #fff;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.14s, transform 0.12s;
 }
 
-button[type="submit"]:hover {
+.actions button:not(.ghost):hover:not(:disabled) {
   background: var(--primary-dark);
   transform: translateY(-1px);
 }
 
-button[type="button"] {
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.14s;
-}
-
-button[type="button"]:hover {
-  background: var(--primary-light);
+.actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

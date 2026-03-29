@@ -36,7 +36,7 @@ public class LeaveRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private LeaveType type = LeaveType.VACATION;
+    private LeaveType type = LeaveType.PAID;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -57,8 +57,7 @@ public class LeaveRequest {
     private String managerNote;
 
     public enum LeaveType {
-        VACATION,
-        SICK,
+        PAID,
         UNPAID
     }
 
@@ -77,7 +76,7 @@ public class LeaveRequest {
             status = LeaveStatus.PENDING;
         }
         if (type == null) {
-            type = LeaveType.VACATION;
+            type = LeaveType.PAID;
         }
     }
 

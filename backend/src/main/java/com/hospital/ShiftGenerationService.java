@@ -22,6 +22,9 @@ public class ShiftGenerationService {
    @Inject
    LeaveRequestRepository leaveRequestRepository;
 
+   @Inject
+   WorkRequestRepository workRequestRepository;
+
     public void generateForMonth(String monthString) {
 
         YearMonth yearMonth = YearMonth.parse(monthString);
@@ -34,8 +37,10 @@ public class ShiftGenerationService {
                 .filter(user -> user.getRole() == User.Role.EMPLOYEE)
                 .collect(Collectors.toList());
         List<LeaveRequest> approvedLeaves = leaveRequestRepository.findApprovedBetween(start, end);
+        List<WorkRequest> approvedWorkRequests = workRequestRepository.findApprovedBetween(start, end);
 
         Map<Long, Set<LocalDate>> leaveMap = buildLeaveMap(approvedLeaves);
+        Map<LocalDate, Map<Long, Shift.ShiftType>> workRequestMap = buildWorkRequestMap(approvedWorkRequests);
 
         Map<Long, Integer> hoursWorked = new HashMap<>();
         for (User user : employees) {
@@ -50,7 +55,7 @@ public class ShiftGenerationService {
 
                 for (int i = 0; i < 3; i++) {
 
-                    User selected = selectEmployee(employees, leaveMap, hoursWorked, current);
+                    User selected = selectEmployee(employees, leaveMap, workRequestMap, hoursWorked, current, type);
 
                     if (selected == null) {
                         throw new RuntimeException("Nem generálható beosztás erre a hónapra!");
@@ -92,7 +97,26 @@ public class ShiftGenerationService {
         return leaveMap;
     }
 
-    private User selectEmployee(List<User> employees, Map<Long, Set<LocalDate>> leaveMap, Map<Long, Integer> hoursWorked, LocalDate date) {
+    private Map<LocalDate, Map<Long, Shift.ShiftType>> buildWorkRequestMap(List<WorkRequest> approvedWorkRequests) {
+        Map<LocalDate, Map<Long, Shift.ShiftType>> map = new HashMap<>();
+
+        for (WorkRequest wr : approvedWorkRequests) {
+            Long userId = wr.getEmployee().getId();
+            LocalDate current = wr.getStartDate();
+            LocalDate end = wr.getEndDate();
+
+            while (!current.isAfter(end)) {
+                map.computeIfAbsent(current, k -> new HashMap<>()).put(userId, wr.getShiftType());
+                current = current.plusDays(1);
+            }
+        }
+
+        return map;
+    }
+
+    private User selectEmployee(List<User> employees, Map<Long, Set<LocalDate>> leaveMap,
+                                Map<LocalDate, Map<Long, Shift.ShiftType>> workRequestMap,
+                                Map<Long, Integer> hoursWorked, LocalDate date, Shift.ShiftType shiftType) {
         List<User> candidates = employees.stream()
                 .filter(user -> !leaveMap.getOrDefault(user.getId(), Set.of()).contains(date))
                 .filter(user -> shiftRepository.count("user.id = ?1 and date = ?2", user.getId(), date) == 0)
@@ -102,12 +126,19 @@ public class ShiftGenerationService {
             return null;
         }
 
-        int minHours = candidates.stream()
+        Map<Long, Shift.ShiftType> requestsForDay = workRequestMap.getOrDefault(date, Map.of());
+        List<User> prioritized = candidates.stream()
+                .filter(user -> requestsForDay.getOrDefault(user.getId(), null) == shiftType)
+                .collect(Collectors.toList());
+
+        List<User> pool = prioritized.isEmpty() ? candidates : prioritized;
+
+        int minHours = pool.stream()
                 .mapToInt(user -> hoursWorked.get(user.getId()))
                 .min()
                 .orElse(Integer.MAX_VALUE);
 
-        List<User> leastWorkedCandidates = candidates.stream()
+        List<User> leastWorkedCandidates = pool.stream()
                 .filter(user -> hoursWorked.get(user.getId()) == minHours)
                 .collect(Collectors.toList());
 

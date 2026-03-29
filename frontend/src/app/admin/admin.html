@@ -1,1 +1,106 @@
-<p>admin works!</p>
+<div class="admin-page">
+  <div class="header-row">
+    <h2>Admin felület</h2>
+    <button type="button" class="ghost" (click)="logout()">Kijelentkezés</button>
+  </div>
+
+  <h3 class="section-title">Felhasználók és szerepkörök</h3>
+
+  <div class="alert success" *ngIf="roleSuccess">{{ roleSuccess }}</div>
+  <div class="alert error" *ngIf="roleError">{{ roleError }}</div>
+  <div class="alert error" *ngIf="deleteUserError">{{ deleteUserError }}</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Felhasználónév</th>
+        <th>Jelenlegi szerepkör</th>
+        <th>Új szerepkör</th>
+        <th>Mentés</th>
+        <th>Törlés</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="users.length === 0">
+        <td colspan="6" class="text-center">Nincs felhasználó.</td>
+      </tr>
+      <tr *ngFor="let u of users">
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>
+          <span
+            [class.badge]="true"
+            [class.badge-admin]="u.role === 'ADMIN'"
+            [class.badge-manager]="u.role === 'MANAGER'"
+            [class.badge-employee]="u.role === 'EMPLOYEE'"
+          >
+            {{ u.role }}
+          </span>
+        </td>
+        <td>
+          <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </td>
+        <td>
+          <button
+            type="button"
+            (click)="changeRole(u)"
+            [disabled]="u.selectedRole === u.role"
+          >
+            Mentés
+          </button>
+        </td>
+        <td>
+          <button
+            type="button"
+            class="danger btn-sm"
+            (click)="deleteUser(u)"
+          >
+            Törlés
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="section-title">Generált beosztás törlése</h3>
+
+  <div class="card delete-card">
+    <div class="row">
+      <label for="deleteMonth">Hónap kiválasztása</label>
+      <input id="deleteMonth" type="month" [(ngModel)]="deleteMonth" name="deleteMonth" />
+    </div>
+
+    <div class="alert success" *ngIf="deleteSuccess">{{ deleteSuccess }}</div>
+    <div class="alert error" *ngIf="deleteError">{{ deleteError }}</div>
+
+    <div class="actions">
+      <button
+        type="button"
+        class="danger"
+        (click)="deleteShiftsForMonth()"
+        [disabled]="!deleteMonth"
+      >
+        Beosztás törlése
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-backdrop" *ngIf="modalVisible" (click)="cancelDelete()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-icon">⚠</div>
+    <h3 class="modal-title">Felhasználó törlése</h3>
+    <p class="modal-body">
+      Biztosan törlöd a(z) <strong>{{ modalTargetUser?.username }}</strong> felhasználót?<br>
+      Ez a művelet nem vonható vissza.
+    </p>
+    <div class="modal-actions">
+      <button type="button" class="ghost" (click)="cancelDelete()">Mégse</button>
+      <button type="button" class="danger" (click)="confirmDelete()">Törlés</button>
+    </div>
+  </div>
+</div>

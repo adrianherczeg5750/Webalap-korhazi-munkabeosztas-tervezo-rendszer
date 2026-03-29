@@ -7,6 +7,10 @@
         Szabadságkérelem benyújtása
       </button>
 
+      <button type="button" (click)="navigateToWorkRequest()">
+        Munkavégzési kérelem benyújtása
+      </button>
+
       <button type="button" (click)="logout()">
         Kijelentkezés
       </button>
@@ -21,30 +25,60 @@
       <th>Típus</th>
       <th>Kezdés</th>
       <th>Vége</th>
-      <th>Külön napok</th>
       <th>Állapot</th>
       <th>Létrehozva</th>
-      <th>Manager megjegyzés</th>
+
     </tr>
     </thead>
 
     <tbody>
-    <tr *ngIf="!leaveRequests || leaveRequests.length === 0">
+    <tr *ngIf="!filteredLeaveRequests || filteredLeaveRequests.length === 0">
       <td colspan="7" class="text-center">Nincs még benyújtott szabadságkérelem.</td>
     </tr>
 
-    <tr *ngFor="let r of leaveRequests">
+
+    <tr *ngFor="let r of filteredLeaveRequests">
       <td>{{ r.type }}</td>
       <td>{{ r.startDate ? (r.startDate | date:'yyyy.MM.dd') : '—' }}</td>
       <td>{{ r.endDate ? (r.endDate | date:'yyyy.MM.dd') : '—' }}</td>
-      <td>{{ formatLeaveDates(r.dates) }}</td>
       <td>
           <span [class.badge]="true" [class.badge-pending]="r.status === 'PENDING'" [class.badge-approved]="r.status === 'APPROVED'" [class.badge-rejected]="r.status === 'REJECTED'">
             {{ r.status }}
           </span>
       </td>
       <td>{{ r.createdAt ? (r.createdAt | date:'yyyy.MM.dd HH:mm') : '—' }}</td>
-      <td>{{ r.managerNote || '—' }}</td>
+    </tr>
+    </tbody>
+  </table>
+
+  <h3 class="section-title">Benyújtott munkavégzési kérelmek</h3>
+
+  <table class="table table-striped table-bordered mt-3">
+    <thead>
+    <tr>
+      <th>Műszak</th>
+      <th>Kezdés</th>
+      <th>Vége</th>
+      <th>Állapot</th>
+      <th>Létrehozva</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr *ngIf="!filteredWorkRequests || filteredWorkRequests.length === 0">
+      <td colspan="5" class="text-center">Nincs még benyújtott munkavégzési kérelem.</td>
+    </tr>
+
+    <tr *ngFor="let r of filteredWorkRequests">
+      <td>{{ toHungarianShiftLabel(r.shiftType) }}</td>
+      <td>{{ r.startDate ? (r.startDate | date:'yyyy.MM.dd') : '—' }}</td>
+      <td>{{ r.endDate ? (r.endDate | date:'yyyy.MM.dd') : '—' }}</td>
+      <td>
+        <span [class.badge]="true" [class.badge-pending]="r.status === 'PENDING'" [class.badge-approved]="r.status === 'APPROVED'" [class.badge-rejected]="r.status === 'REJECTED'">
+          {{ r.status }}
+        </span>
+      </td>
+      <td>{{ r.createdAt ? (r.createdAt | date:'yyyy.MM.dd HH:mm') : '—' }}</td>
     </tr>
     </tbody>
   </table>
@@ -84,7 +118,7 @@
         <td>{{ s.date | date:'yyyy.MM.dd' }}</td>
         <td>{{ s.user?.username || s.employeeUsername || s.username || s.userName || '—' }}</td>
         <td>{{ toHungarianShiftLabel(s.shiftType) }}</td>
-        <td>{{ s.workDuration || '08:00' }}</td>
+        <td>{{ shiftHours(s.shiftType) }}</td>
       </tr>
     </ng-container>
     </tbody>

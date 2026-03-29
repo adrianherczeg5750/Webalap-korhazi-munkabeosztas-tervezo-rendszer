@@ -18,13 +18,17 @@ import {Router} from '@angular/router';
 export class RegisterComponent {
   username: string = '';
   password: string = '';
-  role: string = '';
+  confirmPassword: string = '';
   errorMessage: string = '';
 
   constructor(private readonly authService: AuthService, private readonly router: Router) {}
 
   onRegister(){
-    this.authService.register(this.username, this.password, this.role).subscribe({
+    if (this.password !== this.confirmPassword) {
+      this.errorMessage = 'A két jelszó nem egyezik meg.';
+      return;
+    }
+    this.authService.register(this.username, this.password).subscribe({
       next: () => {
         console.log("Sikeres regisztráció!");
         this.router.navigate(['/login']);

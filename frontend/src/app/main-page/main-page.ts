@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import {environment} from '../../../environments/environment';
 import {LeaveRequestService} from '../services/leaveRequest.service';
+import {WorkRequestService} from '../services/workRequest.service';
 
 @Component({
   selector: 'app-main-page',
@@ -25,11 +26,13 @@ export class MainPageComponent implements OnInit {
   totalWorkHours = '0 óra';
 
   leaveRequests: any[] = [];
+  workRequests: any[] = [];
   loggedInUsername: string | null = null;
 
   constructor(
     private readonly shiftService: ShiftService,
     private readonly leaverequestService: LeaveRequestService,
+    private readonly workRequestService: WorkRequestService,
     private readonly auth: AuthService,
     private readonly router: Router,
     private readonly http: HttpClient,
@@ -53,8 +56,13 @@ export class MainPageComponent implements OnInit {
         next: (data) => (this.leaveRequests = data || []),
         error: (err) => console.error('Leave request list error', err),
       });
+      this.workRequestService.listByEmployee(employeeId).subscribe({
+        next: (data) => (this.workRequests = data || []),
+        error: (err) => console.error('Work request list error', err),
+      });
     } else {
       this.leaveRequests = [];
+      this.workRequests = [];
     }
   }
 
@@ -95,6 +103,50 @@ export class MainPageComponent implements OnInit {
     this.auth.logout();
     this.router.navigate(['/login']);
     localStorage.clear();
+  }
+
+  get filteredWorkRequests(): any[] {
+    return (this.workRequests || []).filter((r: any) => {
+      const startDate = this.parseDate(r?.startDate);
+      if (!startDate) return false;
+      return (
+        startDate.getFullYear() === this.selectedMonth.getFullYear() &&
+        startDate.getMonth() === this.selectedMonth.getMonth()
+      );
+    });
+  }
+
+  get filteredLeaveRequests(): any[] {
+    return (this.leaveRequests || []).filter((r: any) => {
+      const startDate = this.parseDate(r?.startDate);
+      if (!startDate) return false;
+
+      return (
+        startDate.getFullYear() === this.selectedMonth.getFullYear() &&
+        startDate.getMonth() === this.selectedMonth.getMonth()
+      );
+    });
+  }
+
+  private parseDate(value: any): Date | null {
+    if (!value) return null;
+
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) {
+      return parsed;
+    }
+
+    const text = String(value).trim();
+    const huMatch = text.match(/^(\d{4})\.(\d{2})\.(\d{2})/);
+    if (huMatch) {
+      const year = Number(huMatch[1]);
+      const month = Number(huMatch[2]) - 1;
+      const day = Number(huMatch[3]);
+      const date = new Date(year, month, day);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    return null;
   }
 
   prevMonth(): void {
@@ -139,30 +191,27 @@ export class MainPageComponent implements OnInit {
   toHungarianShiftLabel(shiftType: string | null): string {
     switch (shiftType) {
       case 'MORNING':
-      case 'DE':
         return 'Délelőtt';
       case 'AFTERNOON':
-      case 'DU':
         return 'Délután';
       case 'NIGHT':
-      case 'EJSZAKA':
         return 'Éjszakás';
       default:
         return '—';
     }
   }
 
-  formatLeaveDates(dates: any): string {
-    if (!dates) return '—';
-    const arr = Array.isArray(dates) ? dates : Array.from(dates);
-    if (!arr || arr.length === 0) return '—';
-
-    return arr
-      .map((d: any) => {
-        const dt = new Date(d);
-        return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString('hu-HU');
-      })
-      .join(', ');
+  shiftHours(shiftType: string): string {
+    switch (shiftType) {
+      case 'MORNING':
+        return '00:00 - 08:00';
+      case 'AFTERNOON':
+        return '08:00 - 16:00';
+      case 'NIGHT':
+        return '16:00 - 23:59';
+      default:
+        return '—';
+    }
   }
 
   private parseShiftDate(value: any): Date | null {
@@ -176,5 +225,9 @@ export class MainPageComponent implements OnInit {
     if (!raw) return null;
     const n = Number(raw);
     return Number.isFinite(n) ? n : null;
+  }
+
+  navigateToWorkRequest() {
+    this.router.navigate(['/work-request']);
   }
 }

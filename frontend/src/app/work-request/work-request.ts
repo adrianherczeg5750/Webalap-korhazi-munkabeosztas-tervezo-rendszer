@@ -1,33 +1,38 @@
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgForOf, NgIf } from '@angular/common';
-import { Router } from '@angular/router';
-
-import { LeaveRequestService, LeaveType } from '../services/leaveRequest.service';
+import {FormsModule} from '@angular/forms';
+import {NgForOf, NgIf} from '@angular/common';
+import {WorkRequestService} from '../services/workRequest.service';
+import {Router} from '@angular/router';
+import {WorkType} from '../services/workRequest.service';
 
 @Component({
-  selector: 'app-leave-request',
-  standalone: true,
-  imports: [FormsModule, NgForOf, NgIf],
-  templateUrl: './leave-request.html',
-  styleUrl: './leave-request.css',
+  selector: 'app-work-request',
+  imports: [
+    FormsModule,
+    NgForOf,
+    NgIf
+  ],
+  templateUrl: './work-request.html',
+  styleUrl: './work-request.css',
 })
-export class LeaveRequestComponent {
+export class WorkRequest {
   startDate: string = '';
   endDate: string = '';
-  type: LeaveType = 'PAID';
+  type: WorkType = 'SINGLE';
+  role: string = '';
 
   saving = false;
   errorMsg: string | null = null;
   successMsg: string | null = null;
 
-  leaveTypes: Array<{ value: LeaveType; label: string }> = [
-    { value: 'PAID', label: 'Táppénz / Betegszabadság' },
-    { value: 'UNPAID', label: 'Fizetés nélküli szabadság' },
+  workTypes: Array<{ value: WorkType; label: string }> = [
+    { value: 'MULTIPLE', label: 'Több napot felölelő' },
+    { value: 'SINGLE', label: 'Egy napos' },
+
   ];
 
   constructor(
-    private readonly leaveRequestService: LeaveRequestService,
+    private readonly workRequestService: WorkRequestService,
     private readonly router: Router,
   ) {}
 
@@ -41,29 +46,39 @@ export class LeaveRequestComponent {
       return;
     }
 
-    if (!this.startDate || !this.endDate) {
-      this.errorMsg = 'A kezdő és záró dátum megadása kötelező.';
+    if (!this.startDate) {
+      this.errorMsg = 'A dátum megadása kötelező.';
       return;
     }
 
-    if (this.endDate < this.startDate) {
-      this.errorMsg = 'A befejezés dátuma nem lehet korábbi, mint a kezdés dátuma.';
-      return;
+    if (this.type === 'MULTIPLE') {
+      if (!this.endDate) {
+        this.errorMsg = 'A kezdő és záró dátum megadása kötelező.';
+        return;
+      }
+
+      if (this.endDate < this.startDate) {
+        this.errorMsg = 'A befejezés dátuma nem lehet korábbi, mint a kezdés dátuma.';
+        return;
+      }
+    } else {
+      this.endDate = this.startDate;
     }
 
     this.saving = true;
 
-    this.leaveRequestService
+    this.workRequestService
       .create({
         employeeId,
         startDate: this.startDate,
         endDate: this.endDate,
         type: this.type,
+        role: this.role
       })
       .subscribe({
         next: () => {
           this.saving = false;
-          this.successMsg = 'Szabadságkérelem sikeresen benyújtva.';
+          this.successMsg = 'Munkavégzési kérelem sikeresen benyújtva.';
 
           setTimeout(() => this.router.navigate(['/main-page']), 400);
         },
@@ -74,6 +89,7 @@ export class LeaveRequestComponent {
         },
       });
   }
+
 
   cancel(): void {
     this.router.navigate(['/main-page']);

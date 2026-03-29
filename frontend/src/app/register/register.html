@@ -18,18 +18,14 @@
       required
       [(ngModel)]="password"
     />
-    <label for="role">Szerepkör</label>
-    <select
-      id="role"
-      name="role"
+    <label for="confirmPassword">Jelszó megerősítése</label>
+    <input
+      type="password"
+      id="confirmPassword"
+      name="confirmPassword"
       required
-      [(ngModel)]="role"
-    >
-      <option value="" disabled>Válassz szerepkört</option>
-      <option value="ADMIN">ADMIN</option>
-      <option value="MANAGER">MANAGER</option>
-      <option value="EMPLOYEE">EMPLOYEE</option>
-    </select>
+      [(ngModel)]="confirmPassword"
+    />
     <button type="submit">Regisztrálás</button>
     <button type="button" (click)="navigateToLogin()">Van már fiókod?</button>
   </form>

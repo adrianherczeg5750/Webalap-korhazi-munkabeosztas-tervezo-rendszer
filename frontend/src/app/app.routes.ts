@@ -8,6 +8,7 @@ import { AuthService } from './services/auth';
 import {AdminComponent} from './admin/admin';
 import {ManagerComponent} from './manager/manager';
 import {LeaveRequestComponent} from './leave-request/leave-request';
+import {WorkRequest} from './work-request/work-request';
 
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
@@ -38,6 +39,7 @@ export const routes: Routes = [
   { path: 'main-page', component: MainPageComponent , canActivate: [authGuard, roleGuard(['ADMIN','EMPLOYEE'])]},
   { path: 'shift-add', component: ShiftComponent, canActivate: [authGuard, roleGuard(['ADMIN','EMPLOYEE'])] },
   { path: 'leave-request', component: LeaveRequestComponent, canActivate: [authGuard, roleGuard(['ADMIN','EMPLOYEE'])] },
+  { path: 'work-request', component: WorkRequest, canActivate: [authGuard, roleGuard(['ADMIN','EMPLOYEE'])] },
   { path: 'admin', component: AdminComponent, canActivate: [authGuard, roleGuard(['ADMIN'])] },
   { path: 'manager', component: ManagerComponent, canActivate: [authGuard, roleGuard(['ADMIN','MANAGER'])] },
 
