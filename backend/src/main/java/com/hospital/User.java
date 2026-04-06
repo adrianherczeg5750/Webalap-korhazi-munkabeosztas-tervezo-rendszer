@@ -21,9 +21,22 @@ public class User {
         EMPLOYEE
     }
 
+    public enum Assigment {
+        NOT_ASSIGNED,
+        EMERGENCY,
+        INPATIENT,
+        OUTPATIENT,
+        DAY_CARE,
+        NURSING
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     public Role role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    public Assigment assigment;
 
 
     public Long getId() {
@@ -37,5 +50,9 @@ public class User {
 
     public Role getRole() {
         return role;
+    }
+
+    public Assigment getAssigment() {
+        return assigment;
     }
 }

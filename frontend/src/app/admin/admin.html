@@ -4,39 +4,51 @@
     <button type="button" class="ghost" (click)="logout()">Kijelentkezés</button>
   </div>
 
-  <h3 class="section-title">Felhasználók és szerepkörök</h3>
-
   <div class="alert success" *ngIf="roleSuccess">{{ roleSuccess }}</div>
   <div class="alert error" *ngIf="roleError">{{ roleError }}</div>
+  <div class="alert success" *ngIf="assigmentSuccess">{{ assigmentSuccess }}</div>
+  <div class="alert error" *ngIf="assigmentError">{{ assigmentError }}</div>
   <div class="alert error" *ngIf="deleteUserError">{{ deleteUserError }}</div>
 
+  <h3 class="section-title">Alkalmazottak</h3>
   <table class="table">
     <thead>
       <tr>
         <th>ID</th>
         <th>Felhasználónév</th>
-        <th>Jelenlegi szerepkör</th>
-        <th>Új szerepkör</th>
+        <th>Beosztás</th>
+        <th>Új beosztás</th>
+        <th>Mentés</th>
+        <th>Szerepkör</th>
         <th>Mentés</th>
         <th>Törlés</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngIf="users.length === 0">
-        <td colspan="6" class="text-center">Nincs felhasználó.</td>
+      <tr *ngIf="employees.length === 0">
+        <td colspan="8" class="text-center">Nincs alkalmazott.</td>
       </tr>
-      <tr *ngFor="let u of users">
+      <tr *ngFor="let u of employees">
         <td>{{ u.id }}</td>
         <td>{{ u.username }}</td>
         <td>
-          <span
-            [class.badge]="true"
-            [class.badge-admin]="u.role === 'ADMIN'"
-            [class.badge-manager]="u.role === 'MANAGER'"
-            [class.badge-employee]="u.role === 'EMPLOYEE'"
-          >
-            {{ u.role }}
+          <span class="badge badge-assigment">
+            {{ getAssigmentLabel(u.assigment) }}
           </span>
+        </td>
+        <td>
+          <select [(ngModel)]="u.selectedAssigment" [name]="'assigment-' + u.id">
+            <option *ngFor="let a of assigments" [value]="a.value">{{ a.label }}</option>
+          </select>
+        </td>
+        <td>
+          <button
+            type="button"
+            (click)="changeAssigment(u)"
+            [disabled]="u.selectedAssigment === u.assigment"
+          >
+            Mentés
+          </button>
         </td>
         <td>
           <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
@@ -53,13 +65,103 @@
           </button>
         </td>
         <td>
+          <button type="button" class="danger btn-sm" (click)="deleteUser(u)">Törlés</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="section-title">Menedzserek</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Felhasználónév</th>
+        <th>Beosztás</th>
+        <th>Új beosztás</th>
+        <th>Mentés</th>
+        <th>Szerepkör</th>
+        <th>Mentés</th>
+        <th>Törlés</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="managers.length === 0">
+        <td colspan="5" class="text-center">Nincs manager.</td>
+      </tr>
+      <tr *ngFor="let u of managers">
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>
+          <span class="badge badge-assigment">
+            {{ getAssigmentLabel(u.assigment) }}
+          </span>
+        </td>
+        <td>
+          <select [(ngModel)]="u.selectedAssigment" [name]="'assigment-' + u.id">
+            <option *ngFor="let a of assigments" [value]="a.value">{{ a.label }}</option>
+          </select>
+        </td>
+        <td>
+          <button type="button" (click)="changeAssigment(u)" [disabled]="u.selectedAssigment === u.assigment">
+            Mentés
+          </button>
+        </td>
+        <td>
+          <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </td>
+        <td>
           <button
             type="button"
-            class="danger btn-sm"
-            (click)="deleteUser(u)"
+            (click)="changeRole(u)"
+            [disabled]="u.selectedRole === u.role"
           >
-            Törlés
+            Mentés
           </button>
+        </td>
+        <td>
+          <button type="button" class="danger btn-sm" (click)="deleteUser(u)">Törlés</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="section-title">Adminok</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Felhasználónév</th>
+        <th>Szerepkör</th>
+        <th>Mentés</th>
+        <th>Törlés</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="admins.length === 0">
+        <td colspan="5" class="text-center">Nincs admin.</td>
+      </tr>
+      <tr *ngFor="let u of admins">
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>
+          <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </td>
+        <td>
+          <button
+            type="button"
+            (click)="changeRole(u)"
+            [disabled]="u.selectedRole === u.role"
+          >
+            Mentés
+          </button>
+        </td>
+        <td>
+          <button type="button" class="danger btn-sm" (click)="deleteUser(u)">Törlés</button>
         </td>
       </tr>
     </tbody>

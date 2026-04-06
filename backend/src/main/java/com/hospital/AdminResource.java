@@ -33,7 +33,7 @@ public class AdminResource {
     @Path("/users")
     public List<UserDto> listUsers() {
         return userRepository.listAll().stream()
-                .map(u -> new UserDto(u.id, u.username, u.role))
+                .map(u -> new UserDto(u.id, u.username, u.role, u.assigment))
                 .toList();
     }
 
@@ -52,7 +52,28 @@ public class AdminResource {
                     .entity("Érvénytelen szerepkör: " + dto.role)
                     .build();
         }
-        return Response.ok(new UserDto(user.id, user.username, user.role)).build();
+        if (user.role == User.Role.ADMIN) {
+            user.assigment = User.Assigment.NOT_ASSIGNED;
+        }
+        return Response.ok(new UserDto(user.id, user.username, user.role, user.assigment)).build();
+    }
+
+    @PUT
+    @Path("/users/{id}/assigment")
+    @Transactional
+    public Response changeAssigment(@PathParam("id") Long id, ChangeAssigmentDto dto) {
+        User user = userRepository.findById(id);
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("User not found").build();
+        }
+        try {
+            user.assigment = User.Assigment.valueOf(dto.assigment);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Érvénytelen beosztás: " + dto.assigment)
+                    .build();
+        }
+        return Response.ok(new UserDto(user.id, user.username, user.role, user.assigment)).build();
     }
 
     @DELETE
@@ -104,15 +125,21 @@ public class AdminResource {
         public Long id;
         public String username;
         public User.Role role;
+        public User.Assigment assigment;
 
-        public UserDto(Long id, String username, User.Role role) {
+        public UserDto(Long id, String username, User.Role role, User.Assigment assigment) {
             this.id = id;
             this.username = username;
             this.role = role;
+            this.assigment = assigment;
         }
     }
 
     public static class ChangeRoleDto {
         public String role;
+    }
+
+    public static class ChangeAssigmentDto {
+        public String assigment;
     }
 }

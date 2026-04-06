@@ -52,6 +52,12 @@
   box-shadow: 0 0 0 3px rgba(0, 113, 188, 0.14);
 }
 
+.badge-assigment {
+  background: #e8f4fd;
+  color: #0071bc;
+  border: 1px solid #b3d7f0;
+}
+
 .delete-card {
   max-width: 440px;
 }

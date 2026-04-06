@@ -35,13 +35,15 @@ public class UserResource {
         public String username;
         public String role;
         public Long id;
+        public String assigment;
 
-        public LoginResponse(String token, long expiresInSeconds, String username, String role, Long id) {
+        public LoginResponse(String token, long expiresInSeconds, String username, String role, Long id, String assigment) {
             this.token = token;
             this.expiresInSeconds = expiresInSeconds;
             this.username = username;
             this.role = role;
             this.id = id;
+            this.assigment = assigment;
         }
     }
 
@@ -58,6 +60,7 @@ public class UserResource {
             user.role = User.Role.EMPLOYEE;
         }
 
+
         String hashed;
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -70,6 +73,7 @@ public class UserResource {
         }
 
         user.password = hashed;
+        user.assigment = User.Assigment.NOT_ASSIGNED;
         userRepository.save(user);
 
         return Response.ok(user).build();
@@ -105,7 +109,7 @@ public class UserResource {
                 .expiresIn(Duration.ofSeconds(expiresInSeconds))
                 .sign();
 
-        return Response.ok(new LoginResponse(token, expiresInSeconds, dbUser.username, dbUser.role.name(), dbUser.id)).build();
+        return Response.ok(new LoginResponse(token, expiresInSeconds, dbUser.username, dbUser.role.name(), dbUser.id, dbUser.assigment.name())).build();
     }
 
 }

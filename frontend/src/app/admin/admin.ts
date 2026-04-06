@@ -10,6 +10,7 @@ interface UserDto {
   id: number;
   username: string;
   role: string;
+  assigment: string;
 }
 
 @Component({
@@ -22,7 +23,7 @@ interface UserDto {
 export class AdminComponent implements OnInit {
   private baseUrl = environment.apiUrl;
 
-  users: (UserDto & { selectedRole: string })[] = [];
+  users: (UserDto & { selectedRole: string; selectedAssigment: string })[] = [];
 
   deleteMonth: string = '';
   deleteSuccess: string | null = null;
@@ -31,11 +32,21 @@ export class AdminComponent implements OnInit {
   roleSuccess: string | null = null;
   roleError: string | null = null;
   deleteUserError: string | null = null;
+  assigmentSuccess: string | null = null;
+  assigmentError: string | null = null;
 
   modalVisible = false;
-  modalTargetUser: (UserDto & { selectedRole: string }) | null = null;
+  modalTargetUser: (UserDto & { selectedRole: string; selectedAssigment: string }) | null = null;
 
   readonly roles = ['ADMIN', 'MANAGER', 'EMPLOYEE'];
+  readonly assigments: { value: string; label: string }[] = [
+    { value: 'NOT_ASSIGNED', label: 'Nincs beosztva' },
+    { value: 'EMERGENCY', label: 'Sürgősségi' },
+    { value: 'INPATIENT', label: 'Fekvőbeteg' },
+    { value: 'OUTPATIENT', label: 'Járóbeteg' },
+    { value: 'DAY_CARE', label: 'Nappali ellátás' },
+    { value: 'NURSING', label: 'Ápolás' },
+  ];
 
   constructor(
     private readonly http: HttpClient,
@@ -46,13 +57,33 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
     this.http.get<UserDto[]>(`${this.baseUrl}/api/admin/users`).subscribe({
       next: (data) => {
-        this.users = (data || []).map(u => ({ ...u, selectedRole: u.role }));
+        this.users = (data || []).map(u => ({
+          ...u,
+          selectedRole: u.role,
+          selectedAssigment: u.assigment,
+        }));
       },
       error: (err) => console.error('User list error', err),
     });
   }
 
-  changeRole(user: UserDto & { selectedRole: string }): void {
+  get employees() {
+    return this.users.filter(u => u.role === 'EMPLOYEE');
+  }
+
+  get managers() {
+    return this.users.filter(u => u.role === 'MANAGER');
+  }
+
+  get admins() {
+    return this.users.filter(u => u.role === 'ADMIN');
+  }
+
+  getAssigmentLabel(value: string): string {
+    return this.assigments.find(a => a.value === value)?.label ?? value;
+  }
+
+  changeRole(user: UserDto & { selectedRole: string; selectedAssigment: string }): void {
     this.roleSuccess = null;
     this.roleError = null;
 
@@ -62,6 +93,8 @@ export class AdminComponent implements OnInit {
         next: (updated) => {
           user.role = updated.role;
           user.selectedRole = updated.role;
+          user.assigment = updated.assigment;
+          user.selectedAssigment = updated.assigment;
           this.roleSuccess = `${user.username} szerepköre sikeresen módosítva: ${updated.role}`;
         },
         error: (err) => {
@@ -71,7 +104,27 @@ export class AdminComponent implements OnInit {
       });
   }
 
-  deleteUser(user: UserDto & { selectedRole: string }): void {
+  changeAssigment(user: UserDto & { selectedRole: string; selectedAssigment: string }): void {
+    this.assigmentSuccess = null;
+    this.assigmentError = null;
+
+    this.http
+      .put<UserDto>(`${this.baseUrl}/api/admin/users/${user.id}/assigment`, { assigment: user.selectedAssigment })
+      .subscribe({
+        next: (updated) => {
+          user.assigment = updated.assigment;
+          user.selectedAssigment = updated.assigment;
+          const label = this.assigments.find(a => a.value === updated.assigment)?.label ?? updated.assigment;
+          this.assigmentSuccess = `${user.username} beosztása sikeresen módosítva: ${label}`;
+        },
+        error: (err) => {
+          const msg = err?.error?.message || err?.error || err?.message;
+          this.assigmentError = msg ? String(msg) : 'Hiba történt a beosztás módosítása közben.';
+        },
+      });
+  }
+
+  deleteUser(user: UserDto & { selectedRole: string; selectedAssigment: string }): void {
     this.deleteUserError = null;
     this.roleSuccess = null;
     this.modalTargetUser = user;
