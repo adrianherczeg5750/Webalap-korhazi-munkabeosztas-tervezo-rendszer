@@ -4,6 +4,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -22,6 +23,17 @@ public class LeaveRequestResource {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    JsonWebToken jwt;
+
+    private User.Assigment getCallerAssigment() {
+        User caller = userRepository.findByUsername(jwt.getName());
+        if (caller != null && caller.role == User.Role.MANAGER && caller.assigment != User.Assigment.NOT_ASSIGNED) {
+            return caller.assigment;
+        }
+        return null;
+    }
 
     private LeaveRequestResponse toDto(LeaveRequest r) {
         LeaveRequestResponse dto = new LeaveRequestResponse();
@@ -75,6 +87,10 @@ public class LeaveRequestResource {
     @Path("/pending")
     @RolesAllowed({"MANAGER"})
     public List<LeaveRequestResponse> getPending() {
+        User.Assigment assigment = getCallerAssigment();
+        if (assigment != null) {
+            return leaveRequestRepository.findPendingByAssigment(assigment).stream().map(this::toDto).toList();
+        }
         return leaveRequestRepository
                 .list("status", LeaveRequest.LeaveStatus.PENDING)
                 .stream()
@@ -97,6 +113,10 @@ public class LeaveRequestResource {
     @Path("/all")
     @RolesAllowed({"MANAGER"})
     public List<LeaveRequestResponse> listAll() {
+        User.Assigment assigment = getCallerAssigment();
+        if (assigment != null) {
+            return leaveRequestRepository.findAllByAssigment(assigment).stream().map(this::toDto).toList();
+        }
         return leaveRequestRepository.listAll().stream().map(this::toDto).toList();
     }
 

@@ -22,4 +22,12 @@ public class LeaveRequestRepository implements PanacheRepository<LeaveRequest> {
     public List<LeaveRequest> findAllWithEmployee() {
         return list("select lr from LeaveRequest lr join fetch lr.employee order by lr.createdAt desc");
     }
+
+    public List<LeaveRequest> findPendingByAssigment(User.Assigment assigment) {
+        return list("status = ?1 and employee.assigment = ?2", LeaveRequest.LeaveStatus.PENDING, assigment);
+    }
+
+    public List<LeaveRequest> findAllByAssigment(User.Assigment assigment) {
+        return list("employee.assigment", assigment);
+    }
 }

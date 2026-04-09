@@ -25,17 +25,14 @@ public class ShiftGenerationService {
    @Inject
    WorkRequestRepository workRequestRepository;
 
-    public void generateForMonth(String monthString) {
+    public void generateForMonth(String monthString, User.Assigment assigment, int staffPerShift) {
 
         YearMonth yearMonth = YearMonth.parse(monthString);
         LocalDate start = yearMonth.atDay(1);
         LocalDate end = yearMonth.atEndOfMonth();
 
-
-        shiftRepository.deleteByDateBetween(start, end);
-        List<User> employees = userRepository.findAllActive().stream()
-                .filter(user -> user.getRole() == User.Role.EMPLOYEE)
-                .collect(Collectors.toList());
+        shiftRepository.deleteByDateBetweenAndAssigment(start, end, assigment);
+        List<User> employees = userRepository.findByAssigment(assigment);
         List<LeaveRequest> approvedLeaves = leaveRequestRepository.findApprovedBetween(start, end);
         List<WorkRequest> approvedWorkRequests = workRequestRepository.findApprovedBetween(start, end);
 
@@ -53,7 +50,7 @@ public class ShiftGenerationService {
 
             for (Shift.ShiftType type : Shift.ShiftType.values()) {
 
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < staffPerShift; i++) {
 
                     User selected = selectEmployee(employees, leaveMap, workRequestMap, hoursWorked, current, type);
 

@@ -26,6 +26,7 @@ export class AdminComponent implements OnInit {
   users: (UserDto & { selectedRole: string; selectedAssigment: string })[] = [];
 
   deleteMonth: string = '';
+  availableMonths: string[] = [];
   deleteSuccess: string | null = null;
   deleteError: string | null = null;
 
@@ -64,6 +65,11 @@ export class AdminComponent implements OnInit {
         }));
       },
       error: (err) => console.error('User list error', err),
+    });
+
+    this.http.get<string[]>(`${this.baseUrl}/api/admin/shifts/months`).subscribe({
+      next: (months) => { this.availableMonths = months || []; },
+      error: (err) => console.error('Months load error', err),
     });
   }
 
@@ -167,6 +173,7 @@ export class AdminComponent implements OnInit {
     this.http.delete(`${this.baseUrl}/api/admin/shifts/month/${this.deleteMonth}`).subscribe({
       next: () => {
         this.deleteSuccess = `A(z) ${this.deleteMonth} hónap beosztásai sikeresen törölve.`;
+        this.availableMonths = this.availableMonths.filter(m => m !== this.deleteMonth);
         this.deleteMonth = '';
       },
       error: (err) => {

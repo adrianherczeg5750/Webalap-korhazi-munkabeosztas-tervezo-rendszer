@@ -11,6 +11,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 
 import java.time.LocalDate;
@@ -30,8 +31,23 @@ public class ShiftResource {
     @Inject
     ShiftGenerationService shiftService;
 
+    @Inject
+    JsonWebToken jwt;
+
+    private User.Assigment getCallerAssigment() {
+        User caller = userRepository.findByUsername(jwt.getName());
+        if (caller != null && caller.role == User.Role.MANAGER && caller.assigment != User.Assigment.NOT_ASSIGNED) {
+            return caller.assigment;
+        }
+        return null;
+    }
+
     @GET
     public List<Shift> list() {
+        User.Assigment assigment = getCallerAssigment();
+        if (assigment != null) {
+            return shiftRepository.findByEmployeeAssigment(assigment);
+        }
         return shiftRepository.listAll();
     }
 
@@ -42,7 +58,19 @@ public class ShiftResource {
         if (req == null || req.month == null || req.month.isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-        shiftService.generateForMonth(req.month);
+        User caller = userRepository.findByUsername(jwt.getName());
+        if (caller == null || caller.assigment == User.Assigment.NOT_ASSIGNED) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity("Csak beosztott manager generálhat beosztást.")
+                    .build();
+        }
+        int staffPerShift = req.getStaffPerShift();
+        if (staffPerShift < 2 || staffPerShift > 4) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("staffPerShift must be between 2 and 4.")
+                    .build();
+        }
+        shiftService.generateForMonth(req.month, caller.assigment, staffPerShift);
         return Response.ok().build();
     }
 
@@ -51,6 +79,7 @@ public class ShiftResource {
     public static class GenerateRequest {
 
         private String month;
+        private int staffPerShift = 2;
 
         public String getMonth() {
             return month;
@@ -58,6 +87,14 @@ public class ShiftResource {
 
         public void setMonth(String month) {
             this.month = month;
+        }
+
+        public int getStaffPerShift() {
+            return staffPerShift;
+        }
+
+        public void setStaffPerShift(int staffPerShift) {
+            this.staffPerShift = staffPerShift;
         }
     }
 

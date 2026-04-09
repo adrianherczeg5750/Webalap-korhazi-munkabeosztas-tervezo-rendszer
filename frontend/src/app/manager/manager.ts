@@ -26,6 +26,7 @@ export class ManagerComponent implements OnInit {
   monthLabel = '';
   shifts: ShiftDto[] = [];
   monthShifts: any[] = [];
+  staffPerShift = 2;
 
   constructor(
     private readonly router: Router,
@@ -60,6 +61,10 @@ export class ManagerComponent implements OnInit {
       next: (data) => (this.workRequests = data || []),
       error: (err) => console.error('Work request list error', err),
     });
+  }
+
+  get isCurrentMonthGenerated(): boolean{
+    return this.monthShifts.length > 0;
   }
 
   prevMonth(): void {
@@ -217,7 +222,7 @@ export class ManagerComponent implements OnInit {
   generateScheduleForMonth(): void {
     const month = `${this.selectedMonthAndYear.getFullYear()}-${String(this.selectedMonthAndYear.getMonth() + 1).padStart(2, '0')}`;
 
-    this.shiftService.generateForMonth(month).subscribe({
+    this.shiftService.generateForMonth(month, this.staffPerShift).subscribe({
       next: () => {
         this.shiftService.list().subscribe({
           next: (data) => {

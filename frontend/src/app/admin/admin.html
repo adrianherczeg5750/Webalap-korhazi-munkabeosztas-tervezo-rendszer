@@ -172,7 +172,10 @@
   <div class="card delete-card">
     <div class="row">
       <label for="deleteMonth">Hónap kiválasztása</label>
-      <input id="deleteMonth" type="month" [(ngModel)]="deleteMonth" name="deleteMonth" />
+      <select id="deleteMonth" [(ngModel)]="deleteMonth" name="deleteMonth">
+        <option value="">-- Válassz hónapot --</option>
+        <option *ngFor="let m of availableMonths" [value]="m">{{ m }}</option>
+      </select>
     </div>
 
     <div class="alert success" *ngIf="deleteSuccess">{{ deleteSuccess }}</div>

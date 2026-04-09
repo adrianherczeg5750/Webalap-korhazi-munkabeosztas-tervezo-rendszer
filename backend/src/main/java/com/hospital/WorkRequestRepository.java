@@ -13,4 +13,8 @@ public class WorkRequestRepository implements PanacheRepository<WorkRequest> {
         return list("status = ?1 AND startDate <= ?2 AND endDate >= ?3",
                 WorkRequest.WorkStatus.APPROVED, end, start);
     }
+
+    public List<WorkRequest> findAllByAssigment(User.Assigment assigment) {
+        return list("employee.assigment", assigment);
+    }
 }

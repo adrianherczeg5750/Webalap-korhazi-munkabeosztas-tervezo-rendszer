@@ -103,6 +103,12 @@ public class AdminResource {
         return Response.noContent().build();
     }
 
+    @GET
+    @Path("/shifts/months")
+    public List<String> getShiftMonths() {
+        return shiftRepository.findDistinctMonths();
+    }
+
     @DELETE
     @Path("/shifts/month/{month}")
     @Transactional

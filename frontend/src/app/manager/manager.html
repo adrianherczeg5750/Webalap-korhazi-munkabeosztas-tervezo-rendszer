@@ -2,10 +2,20 @@
   <h2 class="section-title">Manager felület</h2>
 
   <div class="d-flex align-items-end gap-2 mt-3 mb-4">
+    <div class="staff-select">
+      <label for="staffPerShift">Fő / műszak</label>
+      <select id="staffPerShift" [(ngModel)]="staffPerShift">
+        <option [ngValue]="2">2 fős műszak</option>
+        <option [ngValue]="3">3 fős műszak</option>
+        <option [ngValue]="4">4 fős műszak</option>
+      </select>
+    </div>
+
     <button
       type="button"
       class="btn btn-primary"
       (click)="generateScheduleForMonth()"
+      [disabled]="isCurrentMonthGenerated"
     >
       Beosztás generálása
     </button>

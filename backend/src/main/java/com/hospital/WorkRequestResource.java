@@ -4,6 +4,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -21,6 +22,17 @@ public class WorkRequestResource {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    JsonWebToken jwt;
+
+    private User.Assigment getCallerAssigment() {
+        User caller = userRepository.findByUsername(jwt.getName());
+        if (caller != null && caller.role == User.Role.MANAGER && caller.assigment != User.Assigment.NOT_ASSIGNED) {
+            return caller.assigment;
+        }
+        return null;
+    }
 
     private WorkRequestResponse toDto(WorkRequest r) {
         WorkRequestResponse dto = new WorkRequestResponse();
@@ -94,6 +106,10 @@ public class WorkRequestResource {
     @Path("/all")
     @RolesAllowed({"MANAGER"})
     public List<WorkRequestResponse> listAll() {
+        User.Assigment assigment = getCallerAssigment();
+        if (assigment != null) {
+            return workRequestRepository.findAllByAssigment(assigment).stream().map(this::toDto).toList();
+        }
         return workRequestRepository.listAll().stream().map(this::toDto).toList();
     }
 
