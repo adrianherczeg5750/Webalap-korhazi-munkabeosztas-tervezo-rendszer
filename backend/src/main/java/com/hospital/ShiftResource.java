@@ -14,8 +14,12 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Path("/api/shifts")
 @Produces(MediaType.APPLICATION_JSON)
@@ -51,6 +55,38 @@ public class ShiftResource {
         return shiftRepository.listAll();
     }
 
+    @GET
+    @Path("/generators")
+    @RolesAllowed({"MANAGER"})
+    public List<String> listGenerators() {
+        List<String> result = new ArrayList<>();
+        java.nio.file.Path dir = java.nio.file.Paths.get("src/main/resources/generators");
+        if (!Files.isDirectory(dir)) {
+            return result;
+        }
+        try (Stream<java.nio.file.Path> entries = Files.list(dir)) {
+            entries.filter(Files::isRegularFile)
+                   .filter(p -> {
+                       String name = p.toString();
+                       if (name.endsWith(".py")) return true;
+                       if (name.endsWith(".java")) {
+                           try {
+                               return Files.readString(p).contains("implements ShiftGenerator");
+                           } catch (IOException ex) {
+                               return false;
+                           }
+                       }
+                       return false;
+                   })
+                   .map(p -> p.getFileName().toString())
+                   .sorted()
+                   .forEach(result::add);
+        } catch (IOException e) {
+            // mappa nem olvasható
+        }
+        return result;
+    }
+
     @POST
     @Path("/generate")
     @RolesAllowed({"MANAGER"})
@@ -70,32 +106,30 @@ public class ShiftResource {
                     .entity("staffPerShift must be between 2 and 4.")
                     .build();
         }
-        shiftService.generateForMonth(req.month, caller.assigment, staffPerShift);
+        String generatorName = req.getGeneratorName();
+        if (generatorName == null || generatorName.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Generálási módszer megadása kötelező.")
+                    .build();
+        }
+        shiftService.generateForMonth(req.month, caller.assigment, staffPerShift, generatorName);
         return Response.ok().build();
     }
-
-
 
     public static class GenerateRequest {
 
         private String month;
         private int staffPerShift = 2;
+        private String generatorName;
 
-        public String getMonth() {
-            return month;
-        }
+        public String getMonth() { return month; }
+        public void setMonth(String month) { this.month = month; }
 
-        public void setMonth(String month) {
-            this.month = month;
-        }
+        public int getStaffPerShift() { return staffPerShift; }
+        public void setStaffPerShift(int staffPerShift) { this.staffPerShift = staffPerShift; }
 
-        public int getStaffPerShift() {
-            return staffPerShift;
-        }
-
-        public void setStaffPerShift(int staffPerShift) {
-            this.staffPerShift = staffPerShift;
-        }
+        public String getGeneratorName() { return generatorName; }
+        public void setGeneratorName(String generatorName) { this.generatorName = generatorName; }
     }
 
 

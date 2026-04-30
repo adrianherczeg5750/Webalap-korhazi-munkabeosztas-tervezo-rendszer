@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {NgIf} from '@angular/common';
 import {AuthService} from '../services/auth';
 import {Router} from '@angular/router';
 
@@ -9,7 +8,6 @@ import {Router} from '@angular/router';
   standalone: true,
   imports: [
     FormsModule,
-    NgIf,
     ReactiveFormsModule
   ],
   templateUrl: './register.html',

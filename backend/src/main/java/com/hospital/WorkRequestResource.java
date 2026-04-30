@@ -24,6 +24,9 @@ public class WorkRequestResource {
     UserRepository userRepository;
 
     @Inject
+    LeaveRequestRepository leaveRequestRepository;
+
+    @Inject
     JsonWebToken jwt;
 
     private User.Assigment getCallerAssigment() {
@@ -127,6 +130,15 @@ public class WorkRequestResource {
         if (manager == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("Manager not found")
+                    .build();
+        }
+
+        Long employeeId = request.getEmployee().getId();
+        List<LeaveRequest> conflicts = leaveRequestRepository.findApprovedByEmployeeOverlapping(
+                employeeId, request.getStartDate(), request.getEndDate());
+        if (!conflicts.isEmpty()) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity("Ütközés: a dolgozónak már van elfogadott szabadság kérelme erre az időszakra.")
                     .build();
         }
 

@@ -2,7 +2,7 @@
 
 set -e
 
-kill_port () {
+check_port () {
   PORT=$1
   PIDS=$(lsof -ti tcp:$PORT 2>/dev/null | tr '\n' ' ')
   if [ -n "$PIDS" ]; then
@@ -13,9 +13,9 @@ kill_port () {
   fi
 }
 
-kill_port 5432
-kill_port 8080
-kill_port 4200
+check_port 5432
+check_port 8080
+check_port 4200
 
 echo "All required ports are free."
 echo "--------------------------------"

@@ -17,7 +17,11 @@ export class ShiftService {
     return this.http.post<ShiftDto>(this.baseUrl, payload);
   }
 
-  generateForMonth(month: string, staffPerShift: number): Observable<void>{
-    return this.http.post<void>(`${this.baseUrl}/generate`, { month, staffPerShift });
+  generateForMonth(month: string, staffPerShift: number, generatorName: string): Observable<void>{
+    return this.http.post<void>(`${this.baseUrl}/generate`, { month, staffPerShift, generatorName });
+  }
+
+  listGenerators(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/generators`);
   }
 }

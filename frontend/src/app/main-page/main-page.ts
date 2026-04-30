@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DatePipe, NgForOf, NgIf } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ShiftService } from '../services/shift.service';
 import { ShiftDto } from '../shift/shift.model';
@@ -12,8 +12,8 @@ import {WorkRequestService} from '../services/workRequest.service';
 @Component({
   selector: 'app-main-page',
   standalone: true,
+  imports: [DatePipe],
   templateUrl: './main-page.html',
-  imports: [DatePipe, NgForOf, NgIf],
   styleUrl: './main-page.css',
 })
 export class MainPageComponent implements OnInit {
@@ -89,10 +89,6 @@ export class MainPageComponent implements OnInit {
   isCurrentUsersShift(s: any): boolean {
     const shiftUsername = s?.user?.username || s?.employeeUsername || s?.username || s?.userName || null;
     return !!this.loggedInUsername && shiftUsername === this.loggedInUsername;
-  }
-
-  navigateToShiftAdd(): void {
-    this.router.navigate(['/shift-add']);
   }
 
   navigateToLeaveRequest(): void {

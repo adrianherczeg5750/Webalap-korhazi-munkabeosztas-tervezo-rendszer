@@ -10,7 +10,9 @@
     <label>Beosztás</label>
     <select [(ngModel)]="role" name="role" required>
       <option value="" disabled>Válassz...</option>
-      <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+      @for (r of roles; track r) {
+        <option [value]="r">{{ r }}</option>
+      }
     </select>
   </div>
 

@@ -7,7 +7,9 @@
     <div class="row">
       <label for="type">Típus</label>
       <select id="type" [(ngModel)]="type" name="type">
-        <option *ngFor="let t of leaveTypes" [ngValue]="t.value">{{ t.label }}</option>
+        @for (t of leaveTypes; track t.value) {
+          <option [ngValue]="t.value">{{ t.label }}</option>
+        }
       </select>
     </div>
 
@@ -25,8 +27,12 @@
       A kérelem státusza alapból <b>PENDING</b>, amíg a manager el nem bírálja.
     </div>
 
-    <div class="alert error" *ngIf="errorMsg">{{ errorMsg }}</div>
-    <div class="alert success" *ngIf="successMsg">{{ successMsg }}</div>
+    @if (errorMsg) {
+      <div class="alert error">{{ errorMsg }}</div>
+    }
+    @if (successMsg) {
+      <div class="alert success">{{ successMsg }}</div>
+    }
 
     <div class="actions">
       <button type="button" class="ghost" (click)="cancel()" [disabled]="saving">Mégse</button>

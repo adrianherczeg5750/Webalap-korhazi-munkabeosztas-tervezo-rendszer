@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import {NgForOf, NgIf} from '@angular/common';
 import {WorkRequestService} from '../services/workRequest.service';
 import {Router} from '@angular/router';
 import {WorkType} from '../services/workRequest.service';
@@ -8,9 +7,7 @@ import {WorkType} from '../services/workRequest.service';
 @Component({
   selector: 'app-work-request',
   imports: [
-    FormsModule,
-    NgForOf,
-    NgIf
+    FormsModule
   ],
   templateUrl: './work-request.html',
   styleUrl: './work-request.css',

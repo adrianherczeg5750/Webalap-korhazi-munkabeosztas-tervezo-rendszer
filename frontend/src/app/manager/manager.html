@@ -2,19 +2,10 @@
   <h2 class="section-title">Manager felület</h2>
 
   <div class="d-flex align-items-end gap-2 mt-3 mb-4">
-    <div class="staff-select">
-      <label for="staffPerShift">Fő / műszak</label>
-      <select id="staffPerShift" [(ngModel)]="staffPerShift">
-        <option [ngValue]="2">2 fős műszak</option>
-        <option [ngValue]="3">3 fős műszak</option>
-        <option [ngValue]="4">4 fős műszak</option>
-      </select>
-    </div>
-
     <button
       type="button"
       class="btn btn-primary"
-      (click)="generateScheduleForMonth()"
+      (click)="openGenerateModal()"
       [disabled]="isCurrentMonthGenerated"
     >
       Beosztás generálása
@@ -24,6 +15,14 @@
       Kijelentkezés
     </button>
   </div>
+
+  @if (generateSuccess) {
+    <div class="success-message">{{ generateSuccess }}</div>
+  }
+  @if (generateError) {
+    <div class="error-message">{{ generateError }}</div>
+  }
+
 
   <div class="month-row">
     <button type="button" class="ghost" (click)="prevMonth()">◀</button>
@@ -47,31 +46,35 @@
     </thead>
 
     <tbody>
-    <tr *ngIf="!filteredLeaveRequests || filteredLeaveRequests.length === 0">
-      <td colspan="9" class="text-center">Nincs megjeleníthető szabadságkérelem.</td>
-    </tr>
+    @if (!filteredLeaveRequests || filteredLeaveRequests.length === 0) {
+      <tr>
+        <td colspan="9" class="text-center">Nincs megjeleníthető szabadságkérelem.</td>
+      </tr>
+    }
 
-    <tr *ngFor="let r of filteredLeaveRequests">
-      <td>{{ toDisplayEmployee(r) }}</td>
-      <td>{{ r.type }}</td>
-      <td>{{ r.startDate ? (r.startDate | date:'yyyy.MM.dd') : '—' }}</td>
-      <td>{{ r.endDate ? (r.endDate | date:'yyyy.MM.dd') : '—' }}</td>
-      <td>
-          <span
-            [class.badge]="true"
-            [class.badge-pending]="r.status === 'PENDING'"
-            [class.badge-approved]="r.status === 'APPROVED'"
-            [class.badge-rejected]="r.status === 'REJECTED'"
-          >
-            {{ r.status }}
-          </span>
-      </td>
-      <td>{{ r.createdAt ? (r.createdAt | date:'yyyy.MM.dd HH:mm') : '—' }}</td>
-      <td>
-        <button type="button" class="btn btn-success btn-sm me-2" (click)="approve(r)">Elfogad</button>
-        <button type="button" class="btn btn-danger btn-sm" (click)="reject(r)">Elutasít</button>
-      </td>
-    </tr>
+    @for (r of filteredLeaveRequests; track r.id) {
+      <tr>
+        <td>{{ toDisplayEmployee(r) }}</td>
+        <td>{{ r.type }}</td>
+        <td>{{ r.startDate ? (r.startDate | date:'yyyy.MM.dd') : '—' }}</td>
+        <td>{{ r.endDate ? (r.endDate | date:'yyyy.MM.dd') : '—' }}</td>
+        <td>
+            <span
+              [class.badge]="true"
+              [class.badge-pending]="r.status === 'PENDING'"
+              [class.badge-approved]="r.status === 'APPROVED'"
+              [class.badge-rejected]="r.status === 'REJECTED'"
+            >
+              {{ r.status }}
+            </span>
+        </td>
+        <td>{{ r.createdAt ? (r.createdAt | date:'yyyy.MM.dd HH:mm') : '—' }}</td>
+        <td>
+          <button type="button" class="btn btn-success btn-sm me-2" (click)="approve(r)">Elfogad</button>
+          <button type="button" class="btn btn-danger btn-sm" (click)="reject(r)">Elutasít</button>
+        </td>
+      </tr>
+    }
     </tbody>
   </table>
   <h3 class="section-title">Összes benyújtott munkavégzési kérelem</h3>
@@ -90,31 +93,35 @@
     </thead>
 
     <tbody>
-    <tr *ngIf="!filteredWorkRequests || filteredWorkRequests.length === 0">
-      <td colspan="7" class="text-center">Nincs megjeleníthető munkavégzési kérelem.</td>
-    </tr>
+    @if (!filteredWorkRequests || filteredWorkRequests.length === 0) {
+      <tr>
+        <td colspan="7" class="text-center">Nincs megjeleníthető munkavégzési kérelem.</td>
+      </tr>
+    }
 
-    <tr *ngFor="let r of filteredWorkRequests">
-      <td>{{ toDisplayEmployee(r) }}</td>
-      <td>{{ toHungarianShiftLabel(r.shiftType) }}</td>
-      <td>{{ r.startDate ? (r.startDate | date:'yyyy.MM.dd') : '—' }}</td>
-      <td>{{ r.endDate ? (r.endDate | date:'yyyy.MM.dd') : '—' }}</td>
-      <td>
-        <span
-          [class.badge]="true"
-          [class.badge-pending]="r.status === 'PENDING'"
-          [class.badge-approved]="r.status === 'APPROVED'"
-          [class.badge-rejected]="r.status === 'REJECTED'"
-        >
-          {{ r.status }}
-        </span>
-      </td>
-      <td>{{ r.createdAt ? (r.createdAt | date:'yyyy.MM.dd HH:mm') : '—' }}</td>
-      <td>
-        <button type="button" class="btn btn-success btn-sm me-2" (click)="approveWorkRequest(r)">Elfogad</button>
-        <button type="button" class="btn btn-danger btn-sm" (click)="rejectWorkRequest(r)">Elutasít</button>
-      </td>
-    </tr>
+    @for (r of filteredWorkRequests; track r.id) {
+      <tr>
+        <td>{{ toDisplayEmployee(r) }}</td>
+        <td>{{ toHungarianShiftLabel(r.shiftType) }}</td>
+        <td>{{ r.startDate ? (r.startDate | date:'yyyy.MM.dd') : '—' }}</td>
+        <td>{{ r.endDate ? (r.endDate | date:'yyyy.MM.dd') : '—' }}</td>
+        <td>
+          <span
+            [class.badge]="true"
+            [class.badge-pending]="r.status === 'PENDING'"
+            [class.badge-approved]="r.status === 'APPROVED'"
+            [class.badge-rejected]="r.status === 'REJECTED'"
+          >
+            {{ r.status }}
+          </span>
+        </td>
+        <td>{{ r.createdAt ? (r.createdAt | date:'yyyy.MM.dd HH:mm') : '—' }}</td>
+        <td>
+          <button type="button" class="btn btn-success btn-sm me-2" (click)="approveWorkRequest(r)">Elfogad</button>
+          <button type="button" class="btn btn-danger btn-sm" (click)="rejectWorkRequest(r)">Elutasít</button>
+        </td>
+      </tr>
+    }
     </tbody>
   </table>
 
@@ -129,18 +136,52 @@
     </thead>
 
     <tbody>
-    <tr *ngIf="!monthShifts || monthShifts.length === 0">
-      <td colspan="4" class="text-center">Erre a hónapra még nincs legenerált beosztás.</td>
-    </tr>
+    @if (!monthShifts || monthShifts.length === 0) {
+      <tr>
+        <td colspan="4" class="text-center">Erre a hónapra még nincs legenerált beosztás.</td>
+      </tr>
+    }
 
-    <ng-container *ngFor="let s of monthShifts">
+    @for (s of monthShifts; track $index) {
       <tr>
         <td>{{ s.date | date:'yyyy.MM.dd' }}</td>
         <td>{{ s.user?.username || s.employeeUsername || s.username || s.userName || '—' }}</td>
         <td>{{ toHungarianShiftLabel(s.shiftType) }}</td>
         <td>{{ shiftHours(s.shiftType) }}</td>
       </tr>
-    </ng-container>
+    }
     </tbody>
   </table>
 </div>
+
+
+@if (generateModalVisible) {
+  <div class="modal-backdrop" (click)="cancelGenerate()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Beosztás generálása</h3>
+
+      <div class="modal-field">
+        <label for="modalStaffPerShift">Fő / műszak</label>
+        <select id="modalStaffPerShift" [(ngModel)]="staffPerShift">
+          <option [ngValue]="2">2 fős műszak</option>
+          <option [ngValue]="3">3 fős műszak</option>
+          <option [ngValue]="4">4 fős műszak</option>
+        </select>
+      </div>
+
+      <div class="modal-field">
+        <label for="modalGenerationMethod">Generálási módszer</label>
+        <select id="modalGenerationMethod" [(ngModel)]="generationMethod">
+          @for (m of generationMethods; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="ghost" (click)="cancelGenerate()">Mégse</button>
+        <button type="button" class="btn btn-primary" (click)="confirmGenerate()">Generálás</button>
+      </div>
+    </div>
+  </div>
+}

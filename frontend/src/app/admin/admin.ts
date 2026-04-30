@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgForOf, NgIf } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
@@ -16,7 +15,7 @@ interface UserDto {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [FormsModule, NgForOf, NgIf],
+  imports: [FormsModule],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
 })
@@ -93,8 +92,7 @@ export class AdminComponent implements OnInit {
     this.roleSuccess = null;
     this.roleError = null;
 
-    this.http
-      .put<UserDto>(`${this.baseUrl}/api/admin/users/${user.id}/role`, { role: user.selectedRole })
+    this.http.put<UserDto>(`${this.baseUrl}/api/admin/users/${user.id}/role`, { role: user.selectedRole })
       .subscribe({
         next: (updated) => {
           user.role = updated.role;
@@ -102,10 +100,12 @@ export class AdminComponent implements OnInit {
           user.assigment = updated.assigment;
           user.selectedAssigment = updated.assigment;
           this.roleSuccess = `${user.username} szerepköre sikeresen módosítva: ${updated.role}`;
+          setTimeout(() => this.roleSuccess = null, 10000);
         },
         error: (err) => {
           const msg = err?.error?.message || err?.error || err?.message;
           this.roleError = msg ? String(msg) : 'Hiba történt a szerepkör módosítása közben.';
+          setTimeout(() => this.roleError = null, 10000);
         },
       });
   }
@@ -114,18 +114,19 @@ export class AdminComponent implements OnInit {
     this.assigmentSuccess = null;
     this.assigmentError = null;
 
-    this.http
-      .put<UserDto>(`${this.baseUrl}/api/admin/users/${user.id}/assigment`, { assigment: user.selectedAssigment })
+    this.http.put<UserDto>(`${this.baseUrl}/api/admin/users/${user.id}/assigment`, { assigment: user.selectedAssigment })
       .subscribe({
         next: (updated) => {
           user.assigment = updated.assigment;
           user.selectedAssigment = updated.assigment;
           const label = this.assigments.find(a => a.value === updated.assigment)?.label ?? updated.assigment;
           this.assigmentSuccess = `${user.username} beosztása sikeresen módosítva: ${label}`;
+          setTimeout(() => this.assigmentSuccess = null, 10000);
         },
         error: (err) => {
           const msg = err?.error?.message || err?.error || err?.message;
           this.assigmentError = msg ? String(msg) : 'Hiba történt a beosztás módosítása közben.';
+          setTimeout(() => this.assigmentError = null, 10000);
         },
       });
   }
@@ -148,10 +149,12 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.users = this.users.filter(u => u.id !== user.id);
         this.roleSuccess = `${user.username} sikeresen törölve.`;
+        setTimeout(() => this.roleSuccess = null, 10000);
       },
       error: (err) => {
         const msg = err?.error?.message || err?.error || err?.message;
         this.deleteUserError = msg ? String(msg) : 'Hiba történt a törlés közben.';
+        setTimeout(() => this.deleteUserError = null, 10000);
       },
     });
   }
@@ -173,12 +176,14 @@ export class AdminComponent implements OnInit {
     this.http.delete(`${this.baseUrl}/api/admin/shifts/month/${this.deleteMonth}`).subscribe({
       next: () => {
         this.deleteSuccess = `A(z) ${this.deleteMonth} hónap beosztásai sikeresen törölve.`;
+        setTimeout(() => this.deleteSuccess = null, 10000);
         this.availableMonths = this.availableMonths.filter(m => m !== this.deleteMonth);
         this.deleteMonth = '';
       },
       error: (err) => {
         const msg = err?.error?.message || err?.error || err?.message;
         this.deleteError = msg ? String(msg) : 'Hiba történt a törlés közben.';
+        setTimeout(() => this.deleteError = null, 10000);
       },
     });
   }

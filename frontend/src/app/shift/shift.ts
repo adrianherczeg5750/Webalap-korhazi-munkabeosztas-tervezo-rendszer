@@ -1,12 +1,12 @@
 import { Component, Inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser, NgForOf } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShiftService } from '../services/shift.service';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-shift',
-  imports: [FormsModule, NgForOf],
+  imports: [FormsModule],
   templateUrl: './shift.html',
   styleUrl: './shift.css',
 })

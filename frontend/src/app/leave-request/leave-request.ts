@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgForOf, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { LeaveRequestService, LeaveType } from '../services/leaveRequest.service';
@@ -8,7 +7,7 @@ import { LeaveRequestService, LeaveType } from '../services/leaveRequest.service
 @Component({
   selector: 'app-leave-request',
   standalone: true,
-  imports: [FormsModule, NgForOf, NgIf],
+  imports: [FormsModule],
   templateUrl: './leave-request.html',
   styleUrl: './leave-request.css',
 })
@@ -53,8 +52,7 @@ export class LeaveRequestComponent {
 
     this.saving = true;
 
-    this.leaveRequestService
-      .create({
+    this.leaveRequestService.create({
         employeeId,
         startDate: this.startDate,
         endDate: this.endDate,

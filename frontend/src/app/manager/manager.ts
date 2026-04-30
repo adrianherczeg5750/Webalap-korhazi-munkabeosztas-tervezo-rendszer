@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DatePipe, NgForOf, NgIf } from '@angular/common';
+import { DatePipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShiftService } from '../services/shift.service';
 import { LeaveRequestService } from '../services/leaveRequest.service';
@@ -8,12 +8,11 @@ import { AuthService } from '../services/auth';
 import { Router } from '@angular/router';
 import {ShiftDto} from '../shift/shift.model';
 
+
 @Component({
   selector: 'app-manager',
   imports: [
     DatePipe,
-    NgForOf,
-    NgIf,
     FormsModule,
   ],
   templateUrl: './manager.html',
@@ -27,6 +26,11 @@ export class ManagerComponent implements OnInit {
   shifts: ShiftDto[] = [];
   monthShifts: any[] = [];
   staffPerShift = 2;
+  generateModalVisible = false;
+  generationMethod = '';
+  generationMethods: { value: string; label: string }[] = [];
+  generateError: string = '';
+  generateSuccess: string = '';
 
   constructor(
     private readonly router: Router,
@@ -219,11 +223,25 @@ export class ManagerComponent implements OnInit {
       error: (err) => console.error('Work request reject error', err),
     });
   }
-  generateScheduleForMonth(): void {
+  openGenerateModal(): void {
+    this.loadGenerationMethods();
+    this.generateModalVisible = true;
+  }
+
+  cancelGenerate(): void {
+    this.generateModalVisible = false;
+  }
+
+  confirmGenerate(): void {
+    this.generateModalVisible = false;
+
     const month = `${this.selectedMonthAndYear.getFullYear()}-${String(this.selectedMonthAndYear.getMonth() + 1).padStart(2, '0')}`;
 
-    this.shiftService.generateForMonth(month, this.staffPerShift).subscribe({
+    const generatorName = this.generationMethod.replace(/\.[^.]+$/, '');
+    this.shiftService.generateForMonth(month, this.staffPerShift, generatorName).subscribe({
       next: () => {
+        this.generateSuccess = 'Beosztás sikeresen legenerálva!';
+        setTimeout(() => this.generateSuccess = '', 10000);
         this.shiftService.list().subscribe({
           next: (data) => {
             this.shifts = data || [];
@@ -232,7 +250,11 @@ export class ManagerComponent implements OnInit {
           error: (err) => console.error('Shift list reload error', err),
         });
       },
-      error: (err) => console.error('Schedule generation error', err),
+      error: (err) => {
+        console.error('Schedule generation error', err);
+        this.generateError = 'Nem sikerült a beosztás generálása!';
+        setTimeout(() => this.generateError = '', 10000);
+      }
     });
   }
 
@@ -246,5 +268,20 @@ export class ManagerComponent implements OnInit {
     if (!value) return null;
     const d = new Date(value);
     return isNaN(d.getTime()) ? null : d;
+  }
+
+  loadGenerationMethods(): void {
+    this.shiftService.listGenerators().subscribe({
+      next: (files) => {
+        this.generationMethods = (files || []).map(f => ({
+          value: f,
+          label: f.replace(/\.[^.]+$/, ''),
+        }));
+        if (this.generationMethods.length > 0) {
+          this.generationMethod = this.generationMethods[0].value;
+        }
+      },
+      error: (err) => console.error('Generator list error', err),
+    });
   }
 }

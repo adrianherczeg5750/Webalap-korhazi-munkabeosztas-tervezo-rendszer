@@ -4,11 +4,21 @@
     <button type="button" class="ghost" (click)="logout()">Kijelentkezés</button>
   </div>
 
-  <div class="alert success" *ngIf="roleSuccess">{{ roleSuccess }}</div>
-  <div class="alert error" *ngIf="roleError">{{ roleError }}</div>
-  <div class="alert success" *ngIf="assigmentSuccess">{{ assigmentSuccess }}</div>
-  <div class="alert error" *ngIf="assigmentError">{{ assigmentError }}</div>
-  <div class="alert error" *ngIf="deleteUserError">{{ deleteUserError }}</div>
+  @if (roleSuccess) {
+    <div class="alert success">{{ roleSuccess }}</div>
+  }
+  @if (roleError) {
+    <div class="alert error">{{ roleError }}</div>
+  }
+  @if (assigmentSuccess) {
+    <div class="alert success">{{ assigmentSuccess }}</div>
+  }
+  @if (assigmentError) {
+    <div class="alert error">{{ assigmentError }}</div>
+  }
+  @if (deleteUserError) {
+    <div class="alert error">{{ deleteUserError }}</div>
+  }
 
   <h3 class="section-title">Alkalmazottak</h3>
   <table class="table">
@@ -25,10 +35,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngIf="employees.length === 0">
-        <td colspan="8" class="text-center">Nincs alkalmazott.</td>
-      </tr>
-      <tr *ngFor="let u of employees">
+      @if (employees.length === 0) {
+        <tr>
+          <td colspan="8" class="text-center">Nincs alkalmazott.</td>
+        </tr>
+      }
+      @for (u of employees; track u.id) {
+      <tr>
         <td>{{ u.id }}</td>
         <td>{{ u.username }}</td>
         <td>
@@ -38,7 +51,9 @@
         </td>
         <td>
           <select [(ngModel)]="u.selectedAssigment" [name]="'assigment-' + u.id">
-            <option *ngFor="let a of assigments" [value]="a.value">{{ a.label }}</option>
+            @for (a of assigments; track a.value) {
+              <option [value]="a.value">{{ a.label }}</option>
+            }
           </select>
         </td>
         <td>
@@ -52,7 +67,9 @@
         </td>
         <td>
           <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
-            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+            @for (r of roles; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
           </select>
         </td>
         <td>
@@ -68,6 +85,7 @@
           <button type="button" class="danger btn-sm" (click)="deleteUser(u)">Törlés</button>
         </td>
       </tr>
+      }
     </tbody>
   </table>
 
@@ -86,10 +104,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngIf="managers.length === 0">
-        <td colspan="5" class="text-center">Nincs manager.</td>
-      </tr>
-      <tr *ngFor="let u of managers">
+      @if (managers.length === 0) {
+        <tr>
+          <td colspan="5" class="text-center">Nincs manager.</td>
+        </tr>
+      }
+      @for (u of managers; track u.id) {
+      <tr>
         <td>{{ u.id }}</td>
         <td>{{ u.username }}</td>
         <td>
@@ -99,7 +120,9 @@
         </td>
         <td>
           <select [(ngModel)]="u.selectedAssigment" [name]="'assigment-' + u.id">
-            <option *ngFor="let a of assigments" [value]="a.value">{{ a.label }}</option>
+            @for (a of assigments; track a.value) {
+              <option [value]="a.value">{{ a.label }}</option>
+            }
           </select>
         </td>
         <td>
@@ -109,7 +132,9 @@
         </td>
         <td>
           <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
-            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+            @for (r of roles; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
           </select>
         </td>
         <td>
@@ -125,6 +150,7 @@
           <button type="button" class="danger btn-sm" (click)="deleteUser(u)">Törlés</button>
         </td>
       </tr>
+      }
     </tbody>
   </table>
 
@@ -140,15 +166,20 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngIf="admins.length === 0">
-        <td colspan="5" class="text-center">Nincs admin.</td>
-      </tr>
-      <tr *ngFor="let u of admins">
+      @if (admins.length === 0) {
+        <tr>
+          <td colspan="5" class="text-center">Nincs admin.</td>
+        </tr>
+      }
+      @for (u of admins; track u.id) {
+      <tr>
         <td>{{ u.id }}</td>
         <td>{{ u.username }}</td>
         <td>
           <select [(ngModel)]="u.selectedRole" [name]="'role-' + u.id">
-            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+            @for (r of roles; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
           </select>
         </td>
         <td>
@@ -164,6 +195,7 @@
           <button type="button" class="danger btn-sm" (click)="deleteUser(u)">Törlés</button>
         </td>
       </tr>
+      }
     </tbody>
   </table>
 
@@ -174,12 +206,18 @@
       <label for="deleteMonth">Hónap kiválasztása</label>
       <select id="deleteMonth" [(ngModel)]="deleteMonth" name="deleteMonth">
         <option value="">-- Válassz hónapot --</option>
-        <option *ngFor="let m of availableMonths" [value]="m">{{ m }}</option>
+        @for (m of availableMonths; track m) {
+          <option [value]="m">{{ m }}</option>
+        }
       </select>
     </div>
 
-    <div class="alert success" *ngIf="deleteSuccess">{{ deleteSuccess }}</div>
-    <div class="alert error" *ngIf="deleteError">{{ deleteError }}</div>
+    @if (deleteSuccess) {
+      <div class="alert success">{{ deleteSuccess }}</div>
+    }
+    @if (deleteError) {
+      <div class="alert error">{{ deleteError }}</div>
+    }
 
     <div class="actions">
       <button
@@ -195,7 +233,8 @@
 </div>
 
 
-<div class="modal-backdrop" *ngIf="modalVisible" (click)="cancelDelete()">
+@if (modalVisible) {
+<div class="modal-backdrop" (click)="cancelDelete()">
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-icon">⚠</div>
     <h3 class="modal-title">Felhasználó törlése</h3>
@@ -209,3 +248,4 @@
     </div>
   </div>
 </div>
+}

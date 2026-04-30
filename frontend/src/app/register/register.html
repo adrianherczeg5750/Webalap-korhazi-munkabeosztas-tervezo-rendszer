@@ -29,5 +29,7 @@
     <button type="submit">Regisztrálás</button>
     <button type="button" (click)="navigateToLogin()">Van már fiókod?</button>
   </form>
-  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+  @if (errorMessage) {
+    <p class="error">{{ errorMessage }}</p>
+  }
 </div>
