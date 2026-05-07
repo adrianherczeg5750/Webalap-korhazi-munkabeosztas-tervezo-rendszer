@@ -204,7 +204,6 @@ public class LeaveRequestResource {
         public String note;
     }
 
-    /** Safe response DTO for list endpoints (avoids serializing LAZY relations) */
     public static class LeaveRequestResponse {
         public Long id;
 
@@ -227,7 +226,6 @@ public class LeaveRequestResource {
         public String managerNote;
     }
 
-    /** Response DTO for approve/reject */
     public static class LeaveRequestDecisionResponse {
         public Long id;
         public LeaveRequest.LeaveStatus status;

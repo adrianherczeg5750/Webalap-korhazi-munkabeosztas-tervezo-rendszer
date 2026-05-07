@@ -80,10 +80,6 @@ public class LeaveRequest {
         }
     }
 
-    public boolean isPending() {
-        return status == LeaveStatus.PENDING;
-    }
-
     public void approve(User manager, String note) {
         this.status = LeaveStatus.APPROVED;
         this.decidedBy = manager;

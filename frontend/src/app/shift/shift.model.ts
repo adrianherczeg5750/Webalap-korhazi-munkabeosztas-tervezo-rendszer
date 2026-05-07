@@ -6,5 +6,4 @@ export interface ShiftDto {
   startAtTime: string;
   endAtDate: string;
   endAtTime: string;
-  workDuration: string;
 }

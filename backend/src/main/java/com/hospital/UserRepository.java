@@ -19,10 +19,6 @@ public class UserRepository implements PanacheRepository<User> {
         persist(user);
     }
 
-    public List<User> findAllActive(){
-        return listAll();
-    }
-
     public List<User> findByAssigment(User.Assigment assigment) {
         return list("role = ?1 and assigment = ?2", User.Role.EMPLOYEE, assigment);
     }

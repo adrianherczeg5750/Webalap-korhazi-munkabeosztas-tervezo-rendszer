@@ -28,19 +28,6 @@ public class Shift {
         NIGHT
     }
 
-    public static final class ShiftHours {
-        private ShiftHours() {}
-
-        public static final int MORNING_START_HOUR = 0;
-        public static final int MORNING_END_HOUR = 8;
-
-        public static final int AFTERNOON_START_HOUR = 8;
-        public static final int AFTERNOON_END_HOUR = 16;
-
-        public static final int NIGHT_START_HOUR = 16;
-        public static final int NIGHT_END_HOUR = 24;
-    }
-
     public Long getId() {
         return id;
     }
@@ -51,14 +38,6 @@ public class Shift {
 
     public void setDate(LocalDate date) {
         this.date = date;
-    }
-
-    @Transient
-    public String getWorkDuration() {
-        if (shiftType == null) {
-            return "00:00";
-        }
-        return "08:00";
     }
 
     public User getUser() {

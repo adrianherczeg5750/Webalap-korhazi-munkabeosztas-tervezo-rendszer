@@ -13,7 +13,7 @@ export class ShiftService {
     return this.http.get<ShiftDto[]>(this.baseUrl);
   }
 
-  create(payload: Omit<ShiftDto, 'id' | 'workDuration'>): Observable<ShiftDto> {
+  create(payload: Omit<ShiftDto, 'id'>): Observable<ShiftDto> {
     return this.http.post<ShiftDto>(this.baseUrl, payload);
   }
 

@@ -1,4 +1,3 @@
--- Drop old constraint first, then migrate data, then add correct constraint
 ALTER TABLE leave_requests DROP CONSTRAINT IF EXISTS leave_type_check;
 
 UPDATE leave_requests SET type = 'PAID'   WHERE type = 'VACATION';
@@ -7,7 +6,6 @@ UPDATE leave_requests SET type = 'UNPAID' WHERE type = 'SICK';
 ALTER TABLE leave_requests ADD CONSTRAINT leave_type_check
     CHECK (type IN ('PAID', 'UNPAID'));
 
--- Work requests table
 CREATE TABLE IF NOT EXISTS work_requests (
     id BIGSERIAL PRIMARY KEY,
     employee_user_id BIGINT NOT NULL,
