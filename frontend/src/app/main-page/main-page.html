@@ -105,6 +105,41 @@
     </div>
   </div>
 
+  @if (monthShifts.length > 0) {
+    <div class="gantt-container">
+      <table class="gantt-table">
+        <thead>
+          <tr>
+            @for (day of ganttDays; track day) {
+              <th>{{ day }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            @for (day of ganttDays; track day) {
+              <td [class]="ganttCellClass(day)">{{ ganttCellLabel(day) }}</td>
+            }
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gantt-legend">
+      <div class="gantt-legend-item">
+        <div class="gantt-legend-color gantt-morning"></div>
+        <span>D – Délelőtt</span>
+      </div>
+      <div class="gantt-legend-item">
+        <div class="gantt-legend-color gantt-afternoon"></div>
+        <span>DU – Délután</span>
+      </div>
+      <div class="gantt-legend-item">
+        <div class="gantt-legend-color gantt-night"></div>
+        <span>É – Éjszaka</span>
+      </div>
+    </div>
+  }
+
   <table class="table table-striped table-bordered mt-3">
     <thead>
     <tr>

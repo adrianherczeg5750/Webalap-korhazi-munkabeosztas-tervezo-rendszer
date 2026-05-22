@@ -47,8 +47,6 @@ public class WorkRequestResource {
         dto.endDate = r.getEndDate();
         dto.createdAt = r.getCreatedAt();
         dto.decidedAt = r.getDecidedAt();
-        dto.managerNote = r.getManagerNote();
-
         if (r.getEmployee() != null) {
             dto.employeeId = r.getEmployee().id;
             dto.employeeUsername = r.getEmployee().username;
@@ -142,12 +140,11 @@ public class WorkRequestResource {
                     .build();
         }
 
-        request.approve(manager, dto.note);
+        request.approve(manager);
 
         WorkRequestDecisionResponse resp = new WorkRequestDecisionResponse();
         resp.id = request.getId();
         resp.status = request.getStatus();
-        resp.managerNote = request.getManagerNote();
         resp.decidedAt = request.getDecidedAt();
         resp.decidedById = manager.id;
         resp.decidedByUsername = manager.username;
@@ -171,12 +168,11 @@ public class WorkRequestResource {
                     .build();
         }
 
-        request.reject(manager, dto.note);
+        request.reject(manager);
 
         WorkRequestDecisionResponse resp = new WorkRequestDecisionResponse();
         resp.id = request.getId();
         resp.status = request.getStatus();
-        resp.managerNote = request.getManagerNote();
         resp.decidedAt = request.getDecidedAt();
         resp.decidedById = manager.id;
         resp.decidedByUsername = manager.username;
@@ -193,7 +189,6 @@ public class WorkRequestResource {
 
     public static class DecisionDTO {
         public Long managerId;
-        public String note;
     }
 
     public static class WorkRequestResponse {
@@ -209,13 +204,11 @@ public class WorkRequestResource {
         public Instant decidedAt;
         public Long decidedById;
         public String decidedByUsername;
-        public String managerNote;
     }
 
     public static class WorkRequestDecisionResponse {
         public Long id;
         public WorkRequest.WorkStatus status;
-        public String managerNote;
         public Instant decidedAt;
         public Long decidedById;
         public String decidedByUsername;

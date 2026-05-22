@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DatePipe} from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShiftService } from '../services/shift.service';
 import { LeaveRequestService } from '../services/leaveRequest.service';
@@ -13,6 +13,7 @@ import {ShiftDto} from '../shift/shift.model';
   selector: 'app-manager',
   imports: [
     DatePipe,
+    DecimalPipe,
     FormsModule,
   ],
   templateUrl: './manager.html',
@@ -31,6 +32,9 @@ export class ManagerComponent implements OnInit {
   generationMethods: { value: string; label: string }[] = [];
   generateError: string = '';
   generateSuccess: string = '';
+  partialModalVisible = false;
+  partialFrom = 1;
+  partialTo = 1;
 
   constructor(
     private readonly router: Router,
@@ -258,6 +262,142 @@ export class ManagerComponent implements OnInit {
     });
   }
 
+  // Gantt chart
+  get ganttDays(): number[] {
+    const year = this.selectedMonthAndYear.getFullYear();
+    const month = this.selectedMonthAndYear.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  }
+
+  get ganttEmployees(): string[] {
+    const names = new Set<string>();
+    for (const s of this.monthShifts) {
+      const name = s.user?.username || s.employeeUsername || s.employeeName || s.username || s.userName;
+      if (name) names.add(name);
+    }
+    return Array.from(names).sort();
+  }
+
+  ganttShiftType(employee: string, day: number): string | null {
+    const year = this.selectedMonthAndYear.getFullYear();
+    const month = this.selectedMonthAndYear.getMonth();
+    const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    for (const s of this.monthShifts) {
+      const name = s.user?.username || s.employeeUsername || s.employeeName || s.username || s.userName;
+      const dateStr = (s.date || s.startAtDate || '').substring(0, 10);
+      if (name === employee && dateStr === dayStr) {
+        return s.shiftType;
+      }
+    }
+    return null;
+  }
+
+  ganttCellClass(employee: string, day: number): string {
+    const type = this.ganttShiftType(employee, day);
+    if (!type) return 'gantt-cell';
+    return 'gantt-cell gantt-' + type.toLowerCase();
+  }
+
+  ganttCellLabel(employee: string, day: number): string {
+    const type = this.ganttShiftType(employee, day);
+    switch (type) {
+      case 'MORNING': return 'D';
+      case 'AFTERNOON': return 'DU';
+      case 'NIGHT': return 'É';
+      default: return '';
+    }
+  }
+
+  ganttTotalHours(employee: string): number {
+    let hours = 0;
+    for (const s of this.monthShifts) {
+      const name = s.user?.username || s.employeeUsername || s.employeeName || s.username || s.userName;
+      if (name === employee && s.shiftType) {
+        hours += 8;
+      }
+    }
+    return hours;
+  }
+
+  get daysInMonth(): number {
+    const year = this.selectedMonthAndYear.getFullYear();
+    const month = this.selectedMonthAndYear.getMonth();
+    return new Date(year, month + 1, 0).getDate();
+  }
+
+  get detectedStaffPerShift(): number {
+    const counts: number[] = [];
+    for (const day of this.ganttDays) {
+      const year = this.selectedMonthAndYear.getFullYear();
+      const month = this.selectedMonthAndYear.getMonth();
+      const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      for (const type of ['MORNING', 'AFTERNOON', 'NIGHT']) {
+        let count = 0;
+        for (const s of this.monthShifts) {
+          const dateStr = (s.date || s.startAtDate || '').substring(0, 10);
+          if (dateStr === dayStr && s.shiftType === type) count++;
+        }
+        if (count > 0) counts.push(count);
+      }
+    }
+    if (counts.length === 0) return this.staffPerShift;
+    return Math.round(counts.reduce((a, b) => a + b, 0) / counts.length);
+  }
+
+  get averageHoursPerEmployee(): number {
+    const employees = this.ganttEmployees.length;
+    if (employees === 0) return 0;
+    const totalShifts = this.daysInMonth * 3 * this.detectedStaffPerShift;
+    return Math.round((totalShifts * 8) / employees);
+  }
+
+  get hoursLowerBound(): number {
+    return Math.round((this.averageHoursPerEmployee * 0.75) / 8) * 8;
+  }
+
+  get hoursUpperBound(): number {
+    return Math.round((this.averageHoursPerEmployee * 1.25) / 8) * 8;
+  }
+
+  hoursStatus(employee: string): 'ok' | 'warning' | 'border' {
+    const hours = this.ganttTotalHours(employee);
+    const lower = Math.round(this.hoursLowerBound);
+    const upper = Math.round(this.hoursUpperBound);
+    if (hours === lower || hours === upper) return 'border';
+    if (hours > lower && hours < upper) return 'ok';
+    return 'warning';
+  }
+
+  get maxEmployeeHours(): number {
+    let max = 0;
+    for (const emp of this.ganttEmployees) {
+      const h = this.ganttTotalHours(emp);
+      if (h > max) max = h;
+    }
+    const upper = this.hoursUpperBound;
+    if (upper > max) max = upper;
+    return max || 1;
+  }
+
+  get hoursChartTicks(): number[] {
+    const max = this.maxEmployeeHours;
+    const step = max <= 80 ? 8 : 16;
+    const ticks: number[] = [];
+    for (let i = 0; i <= max; i += step) {
+      ticks.push(i);
+    }
+    if (ticks[ticks.length - 1] < max) {
+      ticks.push(max);
+    }
+    return ticks;
+  }
+
+  hoursBarWidth(employee: string): number {
+    return (this.ganttTotalHours(employee) / this.maxEmployeeHours) * 100;
+  }
+
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/login']);
@@ -268,6 +408,44 @@ export class ManagerComponent implements OnInit {
     if (!value) return null;
     const d = new Date(value);
     return isNaN(d.getTime()) ? null : d;
+  }
+
+  openPartialModal(): void {
+    this.loadGenerationMethods();
+    const daysInMonth = new Date(this.selectedMonthAndYear.getFullYear(), this.selectedMonthAndYear.getMonth() + 1, 0).getDate();
+    this.partialFrom = 1;
+    this.partialTo = daysInMonth;
+    this.partialModalVisible = true;
+  }
+
+  cancelPartial(): void {
+    this.partialModalVisible = false;
+  }
+
+  confirmPartial(): void {
+    this.partialModalVisible = false;
+
+    const month = `${this.selectedMonthAndYear.getFullYear()}-${String(this.selectedMonthAndYear.getMonth() + 1).padStart(2, '0')}`;
+    const generatorName = this.generationMethod.replace(/\.[^.]+$/, '');
+
+    this.shiftService.regeneratePartial(month, this.partialFrom, this.partialTo, this.staffPerShift, generatorName).subscribe({
+      next: () => {
+        this.generateSuccess = `Beosztás sikeresen újragenerálva (${this.partialFrom}. - ${this.partialTo}. nap)!`;
+        setTimeout(() => this.generateSuccess = '', 10000);
+        this.shiftService.list().subscribe({
+          next: (data) => {
+            this.shifts = data || [];
+            this.rebuildMonthView();
+          },
+          error: (err) => console.error('Shift list reload error', err),
+        });
+      },
+      error: (err) => {
+        console.error('Partial regeneration error', err);
+        this.generateError = 'Nem sikerült a részleges újragenerálás!';
+        setTimeout(() => this.generateError = '', 10000);
+      }
+    });
   }
 
   loadGenerationMethods(): void {

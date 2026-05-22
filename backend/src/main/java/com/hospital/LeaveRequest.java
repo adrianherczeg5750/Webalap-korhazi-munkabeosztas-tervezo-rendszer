@@ -53,9 +53,6 @@ public class LeaveRequest {
     @JoinColumn(name = "decided_by_user_id")
     private User decidedBy;
 
-    @Column(name = "manager_note", length = 1000)
-    private String managerNote;
-
     public enum LeaveType {
         PAID,
         UNPAID
@@ -80,18 +77,16 @@ public class LeaveRequest {
         }
     }
 
-    public void approve(User manager, String note) {
+    public void approve(User manager) {
         this.status = LeaveStatus.APPROVED;
         this.decidedBy = manager;
         this.decidedAt = Instant.now();
-        this.managerNote = note;
     }
 
-    public void reject(User manager, String note) {
+    public void reject(User manager) {
         this.status = LeaveStatus.REJECTED;
         this.decidedBy = manager;
         this.decidedAt = Instant.now();
-        this.managerNote = note;
     }
 
     public Long getId() {
@@ -166,11 +161,4 @@ public class LeaveRequest {
         this.decidedBy = decidedBy;
     }
 
-    public String getManagerNote() {
-        return managerNote;
-    }
-
-    public void setManagerNote(String managerNote) {
-        this.managerNote = managerNote;
-    }
 }

@@ -3,7 +3,6 @@ package com.hospital;
 import com.hospital.Shift.ShiftType;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.*;
 
 public class BacktrackingGenerator implements ShiftGenerator {
@@ -11,41 +10,68 @@ public class BacktrackingGenerator implements ShiftGenerator {
     public List<ShiftAssigment> generate(GeneratorInput input) {
         List<ShiftAssigment> result = new ArrayList<>();
 
-        YearMonth yearMonth = YearMonth.parse(input.getMonth());
-        LocalDate start = yearMonth.atDay(1);
-        LocalDate end = yearMonth.atEndOfMonth();
+        LocalDate start = input.getStartDate();
+        LocalDate end = input.getEndDate();
 
         List<User> employees = input.getEmployees();
         Map<Long, Set<LocalDate>> leaveMap = input.getLeaveDays();
         Map<LocalDate, Map<Long, ShiftType>> workRequestMap = input.getWorkRequests();
 
         Map<Long, Integer> hoursWorked = new HashMap<>();
+        for (User user : employees) {
+            hoursWorked.put(user.getId(), input.getHoursWorked().getOrDefault(user.getId(), 0));
+        }
         Map<LocalDate, Set<Long>> assignedPerDay = new HashMap<>();
+        
+        Map<String, Integer> fixedCounts = new HashMap<>();
+        for (ShiftAssigment fixed : input.getFixedAssignments()) {
+            String key = fixed.getDate() + "_" + fixed.getShiftType();
+            fixedCounts.merge(key, 1, Integer::sum);
+            assignedPerDay.computeIfAbsent(fixed.getDate(), k -> new HashSet<>()).add(fixed.getUserId());
+            hoursWorked.merge(fixed.getUserId(), 8, Integer::sum);
+        }
 
         Shift.ShiftType[] shiftTypes = { Shift.ShiftType.MORNING, Shift.ShiftType.AFTERNOON, Shift.ShiftType.NIGHT};
         List<Slot> slots = new ArrayList<>();
         LocalDate currentDate = start;
         while (!currentDate.isAfter(end)) {
             for (Shift.ShiftType shiftType : shiftTypes) {
-                for (int i = 0; i < input.getStaffPerShift(); i++){
+                String slotKey = currentDate + "_" + shiftType;
+                int alreadyFilled = fixedCounts.getOrDefault(slotKey, 0);
+                int remaining = input.getStaffPerShift() - alreadyFilled;
+                for (int i = 0; i < remaining; i++){
                     slots.add(new Slot(currentDate, shiftType));
                 }
             }
             currentDate = currentDate.plusDays(1);
         }
 
-        boolean success = solve(0, slots, result, assignedPerDay, hoursWorked, employees, workRequestMap, leaveMap);
+        Map<LocalDate, Set<Long>> nightShiftDays = new HashMap<>();
+        for (ShiftAssigment fixed : input.getFixedAssignments()) {
+            if (fixed.getShiftType() == ShiftType.NIGHT) {
+                nightShiftDays.computeIfAbsent(fixed.getDate(), k -> new HashSet<>()).add(fixed.getUserId());
+            }
+        }
+
+        boolean success = solve(0, slots, result, assignedPerDay, hoursWorked, employees, workRequestMap, leaveMap, nightShiftDays);
         if (!success) {
             throw new RuntimeException("Nem generálható beosztás erre a hónapra!");
         }
         return result;
     }
 
-    private boolean isValid(User emp, LocalDate date, Set<Long> assignedToday, Map<Long, Set<LocalDate>> leaveDays) {
+    private boolean isValid(User emp, LocalDate date, ShiftType shiftType,
+                            Set<Long> assignedToday, Map<Long, Set<LocalDate>> leaveDays,
+                            Map<LocalDate, Set<Long>> nightShiftDays) {
         Long empId = emp.getId();
         if (assignedToday.contains(empId)) return false;
         Set<LocalDate> leaves = leaveDays.get(empId);
         if (leaves != null && leaves.contains(date)) return false;
+        if (shiftType == ShiftType.MORNING) {
+            LocalDate prevDay = date.minusDays(1);
+            Set<Long> prevNight = nightShiftDays.getOrDefault(prevDay, Set.of());
+            if (prevNight.contains(empId)) return false;
+        }
         return true;
     }
 
@@ -55,11 +81,12 @@ public class BacktrackingGenerator implements ShiftGenerator {
                                      Map<Long, Set<LocalDate>> leaveDays,
                                      List<User> employees,
                                      Map<Long, Integer> hoursWorked,
-                                     Map<LocalDate, Map<Long, Shift.ShiftType>> workRequests) {
+                                     Map<LocalDate, Map<Long, Shift.ShiftType>> workRequests,
+                                     Map<LocalDate, Set<Long>> nightShiftDays) {
 
         List<User> valid = new ArrayList<>();
         for (User user : employees) {
-            if (isValid(user, date, assignedToday, leaveDays)) {
+            if (isValid(user, date, shiftType, assignedToday, leaveDays, nightShiftDays)) {
                 valid.add(user);
             }
         }
@@ -85,14 +112,15 @@ public class BacktrackingGenerator implements ShiftGenerator {
                           Map<Long, Integer> hoursWorked,
                           List<User> employees,
                           Map<LocalDate, Map<Long, Shift.ShiftType>> workRequests,
-                          Map<Long, Set<LocalDate>> leaveDays) {
+                          Map<Long, Set<LocalDate>> leaveDays,
+                          Map<LocalDate, Set<Long>> nightShiftDays) {
         if (slotIndex == slots.size()) return true;
         if (slotIndex < 0 || slotIndex >= slots.size()) return false;
 
         Slot slot = slots.get(slotIndex);
         Set<Long> assignedToday = assignedPerDay.computeIfAbsent(slot.date, k -> new HashSet<>());
 
-        List<User> candidates = getCandidates(slot.date, slot.shiftType, assignedToday, leaveDays, employees, hoursWorked, workRequests);
+        List<User> candidates = getCandidates(slot.date, slot.shiftType, assignedToday, leaveDays, employees, hoursWorked, workRequests, nightShiftDays);
 
         for (User emp : candidates) {
             Long empId = emp.getId();
@@ -101,14 +129,20 @@ public class BacktrackingGenerator implements ShiftGenerator {
             assignedToday.add(empId);
             assignedPerDay.put(slot.date, assignedToday);
             hoursWorked.merge(empId, 8, Integer::sum);
+            if (slot.shiftType == ShiftType.NIGHT) {
+                nightShiftDays.computeIfAbsent(slot.date, k -> new HashSet<>()).add(empId);
+            }
 
-            if (solve(slotIndex + 1, slots, result, assignedPerDay, hoursWorked, employees, workRequests, leaveDays)) {
+            if (solve(slotIndex + 1, slots, result, assignedPerDay, hoursWorked, employees, workRequests, leaveDays, nightShiftDays)) {
                 return true;
             }
 
             result.remove(result.size() - 1);
             assignedToday.remove(empId);
             hoursWorked.merge(empId, -8, Integer::sum);
+            if (slot.shiftType == ShiftType.NIGHT) {
+                nightShiftDays.getOrDefault(slot.date, new HashSet<>()).remove(empId);
+            }
         }
         return false;
     }

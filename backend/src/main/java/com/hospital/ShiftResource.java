@@ -178,4 +178,71 @@ public class ShiftResource {
         public LocalDate date;
         public Shift.ShiftType shiftType;
     }
+
+    @POST
+    @Path("/regenerate-partial")
+    @RolesAllowed({"MANAGER"})
+    public Response PartialGenerate(PartialGenerateRequest req){
+        if (req == null || req.month == null || req.month.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        if (req.from < 1 || req.to < req.from || req.to > 31) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        User caller = userRepository.findByUsername(jwt.getName());
+        if (caller == null || caller.assigment == User.Assigment.NOT_ASSIGNED) {
+            return Response.status(Response.Status.FORBIDDEN).entity("Csak beosztott manager generálhat beosztást újra").build();
+        }
+
+        int staffPerShift = req.getStaffPerShift();
+        if (staffPerShift < 2 || staffPerShift > 4) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        String generatorName = req.getGeneratorName();
+        if (generatorName == null || generatorName.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        shiftService.regeneratePartial(req.month, caller.assigment, staffPerShift, generatorName, req.from, req.to);
+        return Response.ok().build();
+    }
+
+    public static class PartialGenerateRequest{
+        private String month;
+        private int from;
+        private int to;
+        private int staffPerShift;
+        private String generatorName;
+
+        public String getMonth() {
+            return month;
+        }
+        public void setMonth(String month) {
+            this.month = month;
+        }
+        public int getFrom() {
+            return from;
+        }
+        public void setFrom(int from) {
+            this.from = from;
+        }
+        public int getTo() {
+            return to;
+        }
+        public void setTo(int to) {
+            this.to = to;
+        }
+        public int getStaffPerShift() {
+            return staffPerShift;
+        }
+        public void setStaffPerShift(int staffPerShift) {
+            this.staffPerShift = staffPerShift;
+        }
+        public String getGeneratorName() {
+            return generatorName;
+        }
+        public void setGeneratorName(String generatorName) {
+            this.generatorName = generatorName;
+        }
+    }
 }

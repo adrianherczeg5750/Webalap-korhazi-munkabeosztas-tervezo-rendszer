@@ -72,7 +72,7 @@ public class WorkRequestResourceTest {
 
         decisionDto = new WorkRequestResource.DecisionDTO();
         decisionDto.managerId = 2L;
-        decisionDto.note = "Rendben";
+
     }
 
     @Test

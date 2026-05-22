@@ -69,7 +69,7 @@ public class LeaveRequestResourceTest {
 
         decisionDto = new LeaveRequestResource.DecisionDTO();
         decisionDto.managerId = 2L;
-        decisionDto.note = "Jóváhagyva";
+
     }
 
     @Test

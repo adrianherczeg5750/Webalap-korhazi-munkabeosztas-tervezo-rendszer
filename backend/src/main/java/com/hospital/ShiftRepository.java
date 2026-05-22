@@ -31,4 +31,8 @@ public class ShiftRepository implements PanacheRepository<Shift> {
     public void save(Shift shift) {
         persist(shift);
     }
+
+    public List<Shift> findByDateBetween(LocalDate start, LocalDate end) {
+        return list("date >= ?1 and date <= ?2", start, end);
+    }
 }

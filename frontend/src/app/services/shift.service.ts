@@ -24,4 +24,8 @@ export class ShiftService {
   listGenerators(): Observable<string[]> {
     return this.http.get<string[]>(`${this.baseUrl}/generators`);
   }
+
+  regeneratePartial(month: string, from: number, to: number, staffPerShift: number, generatorName: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/regenerate-partial`, { month, from, to, staffPerShift, generatorName });
+  }
 }

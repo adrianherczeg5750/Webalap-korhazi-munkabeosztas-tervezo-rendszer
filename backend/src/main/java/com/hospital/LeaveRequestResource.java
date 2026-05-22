@@ -48,8 +48,6 @@ public class LeaveRequestResource {
         dto.dates = r.getDates();
         dto.createdAt = r.getCreatedAt();
         dto.decidedAt = r.getDecidedAt();
-        dto.managerNote = r.getManagerNote();
-
         if (r.getEmployee() != null) {
             dto.employeeId = r.getEmployee().id;
             dto.employeeUsername = r.getEmployee().username;
@@ -150,12 +148,11 @@ public class LeaveRequestResource {
                     .build();
         }
 
-        request.approve(manager, dto.note);
+        request.approve(manager);
 
         LeaveRequestDecisionResponse resp = new LeaveRequestDecisionResponse();
         resp.id = request.getId();
         resp.status = request.getStatus();
-        resp.managerNote = request.getManagerNote();
         resp.decidedAt = request.getDecidedAt();
         resp.decidedById = manager.id;
         resp.decidedByUsername = manager.username;
@@ -180,12 +177,11 @@ public class LeaveRequestResource {
                     .build();
         }
 
-        request.reject(manager, dto.note);
+        request.reject(manager);
 
         LeaveRequestDecisionResponse resp = new LeaveRequestDecisionResponse();
         resp.id = request.getId();
         resp.status = request.getStatus();
-        resp.managerNote = request.getManagerNote();
         resp.decidedAt = request.getDecidedAt();
         resp.decidedById = manager.id;
         resp.decidedByUsername = manager.username;
@@ -201,7 +197,6 @@ public class LeaveRequestResource {
 
     public static class DecisionDTO {
         public Long managerId;
-        public String note;
     }
 
     public static class LeaveRequestResponse {
@@ -223,13 +218,11 @@ public class LeaveRequestResource {
         public Long decidedById;
         public String decidedByUsername;
 
-        public String managerNote;
     }
 
     public static class LeaveRequestDecisionResponse {
         public Long id;
         public LeaveRequest.LeaveStatus status;
-        public String managerNote;
         public Instant decidedAt;
         public Long decidedById;
         public String decidedByUsername;

@@ -1,5 +1,6 @@
 package com.hospital;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 @Entity
 @Table(name = "users")
@@ -12,6 +13,7 @@ public class User {
     @Column(nullable = false, unique = true)
     public String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     public String password;
 

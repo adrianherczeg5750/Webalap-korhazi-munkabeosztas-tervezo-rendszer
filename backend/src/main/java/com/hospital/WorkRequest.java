@@ -45,9 +45,6 @@ public class WorkRequest {
     @JoinColumn(name = "decided_by_user_id")
     private User decidedBy;
 
-    @Column(name = "manager_note", length = 1000)
-    private String managerNote;
-
     public enum WorkType {
         SINGLE,
         MULTIPLE
@@ -73,18 +70,16 @@ public class WorkRequest {
         return status == WorkStatus.PENDING;
     }
 
-    public void approve(User manager, String note) {
+    public void approve(User manager) {
         this.status = WorkStatus.APPROVED;
         this.decidedBy = manager;
         this.decidedAt = Instant.now();
-        this.managerNote = note;
     }
 
-    public void reject(User manager, String note) {
+    public void reject(User manager) {
         this.status = WorkStatus.REJECTED;
         this.decidedBy = manager;
         this.decidedAt = Instant.now();
-        this.managerNote = note;
     }
 
     public Long getId() { return id; }
@@ -115,6 +110,4 @@ public class WorkRequest {
     public User getDecidedBy() { return decidedBy; }
     public void setDecidedBy(User decidedBy) { this.decidedBy = decidedBy; }
 
-    public String getManagerNote() { return managerNote; }
-    public void setManagerNote(String managerNote) { this.managerNote = managerNote; }
 }

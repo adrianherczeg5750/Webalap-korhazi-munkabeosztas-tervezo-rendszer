@@ -44,8 +44,20 @@ public class ShiftGenerationService {
 
         Map<Long, Set<LocalDate>> leaveMap = buildLeaveMap(approvedLeaves);
         Map<LocalDate, Map<Long, Shift.ShiftType>> workRequestMap = buildWorkRequestMap(approvedWorkRequests);
+        Map<Long, Integer> hoursWorked = new HashMap<>();
 
-        GeneratorInput input = new GeneratorInput(monthString, staffPerShift, employees, leaveMap, workRequestMap);
+        List<ShiftAssigment> fixedAssignments = buildFixedAssignments(approvedWorkRequests, employees, start, end);
+
+        for (ShiftAssigment fixed : fixedAssignments) {
+            User user = userRepository.findById(fixed.getUserId());
+            Shift shift = new Shift();
+            shift.setDate(fixed.getDate());
+            shift.setType(fixed.getShiftType());
+            shift.setEmployee(user);
+            shiftRepository.save(shift);
+        }
+
+        GeneratorInput input = new GeneratorInput(monthString, staffPerShift, employees, leaveMap, workRequestMap, fixedAssignments, hoursWorked, start, end);
         List<ShiftAssigment> assignments = generator.generate(input);
 
         for (ShiftAssigment a : assignments) {
@@ -114,12 +126,30 @@ public class ShiftGenerationService {
                     workRequestsStr.put(entry.getKey().toString(), inner);
                 }
 
+                List<Map<String, Object>> fixedList = new ArrayList<>();
+                for (ShiftAssigment fixed : input.getFixedAssignments()) {
+                    Map<String, Object> f = new HashMap<>();
+                    f.put("userId", fixed.getUserId());
+                    f.put("date", fixed.getDate().toString());
+                    f.put("shiftType", fixed.getShiftType().name());
+                    fixedList.add(f);
+                }
+
                 Map<String, Object> jsonInput = new HashMap<>();
                 jsonInput.put("month", input.getMonth());
                 jsonInput.put("staffPerShift", input.getStaffPerShift());
                 jsonInput.put("employees", employeeList);
                 jsonInput.put("leaveDays", leaveDaysStr);
                 jsonInput.put("workRequests", workRequestsStr);
+                jsonInput.put("fixedAssignments", fixedList);
+
+                Map<String, Integer> hoursWorkedStr = new HashMap<>();
+                for (Map.Entry<Long, Integer> entry : input.getHoursWorked().entrySet()) {
+                    hoursWorkedStr.put(entry.getKey().toString(), entry.getValue());
+                }
+                jsonInput.put("hoursWorked", hoursWorkedStr);
+                jsonInput.put("startDate", input.getStartDate().toString());
+                jsonInput.put("endDate", input.getEndDate().toString());
 
                 String inputJson = mapper.writeValueAsString(jsonInput);
 
@@ -156,6 +186,29 @@ public class ShiftGenerationService {
         };
     }
 
+    private List<ShiftAssigment> buildFixedAssignments(List<WorkRequest> approvedWorkRequests, List<User> employees, LocalDate start, LocalDate end) {
+        Set<Long> employeeIds = new HashSet<>();
+        for (User emp : employees) {
+            employeeIds.add(emp.getId());
+        }
+
+        List<ShiftAssigment> fixed = new ArrayList<>();
+        for (WorkRequest wr : approvedWorkRequests) {
+            Long userId = wr.getEmployee().getId();
+            if (!employeeIds.contains(userId)) continue;
+
+            LocalDate current = wr.getStartDate();
+            LocalDate wrEnd = wr.getEndDate();
+            while (!current.isAfter(wrEnd)) {
+                if (!current.isBefore(start) && !current.isAfter(end)) {
+                    fixed.add(new ShiftAssigment(userId, current, wr.getShiftType()));
+                }
+                current = current.plusDays(1);
+            }
+        }
+        return fixed;
+    }
+
     private Map<Long, Set<LocalDate>> buildLeaveMap(List<LeaveRequest> approvedLeaves) {
         Map<Long, Set<LocalDate>> leaveMap = new HashMap<>();
         for (LeaveRequest leave : approvedLeaves) {
@@ -182,5 +235,59 @@ public class ShiftGenerationService {
             }
         }
         return map;
+    }
+
+    public void regeneratePartial(String month, User.Assigment assigment, int staffPerShift, String generatorName, int from, int to) {
+
+        YearMonth yearMonth = YearMonth.parse(month);
+        LocalDate start = yearMonth.atDay(from);
+        LocalDate end = yearMonth.atDay(to);
+        ShiftGenerator generator = loadGenerator(generatorName);
+
+        shiftRepository.deleteByDateBetweenAndAssigment(start, end, assigment);
+
+        List<User> employees = userRepository.findByAssigment(assigment);
+        List<LeaveRequest> approvedLeaves = leaveRequestRepository.findApprovedBetween(start, end);
+        List<WorkRequest> approvedWorkRequests = workRequestRepository.findApprovedBetween(start, end);
+
+
+        Map<Long, Set<LocalDate>> leaveMap = buildLeaveMap(approvedLeaves);
+        Map<LocalDate, Map<Long, Shift.ShiftType>> workRequestMap = buildWorkRequestMap(approvedWorkRequests);
+        Map<Long, Integer>  hoursWorked = hoursWorkedOutside(start, end, yearMonth);
+
+        List<ShiftAssigment> fixedAssignments = buildFixedAssignments(approvedWorkRequests, employees, start, end);
+
+        for (ShiftAssigment fixed : fixedAssignments) {
+            User user = userRepository.findById(fixed.getUserId());
+            Shift shift = new Shift();
+            shift.setDate(fixed.getDate());
+            shift.setType(fixed.getShiftType());
+            shift.setEmployee(user);
+            shiftRepository.save(shift);
+        }
+
+        GeneratorInput input = new GeneratorInput(month, staffPerShift, employees, leaveMap, workRequestMap, fixedAssignments, hoursWorked, start, end);
+        List<ShiftAssigment> assignments = generator.generate(input);
+
+        for (ShiftAssigment a : assignments) {
+            User user = userRepository.findById(a.getUserId());
+            Shift shift = new Shift();
+            shift.setDate(a.getDate());
+            shift.setType(a.getShiftType());
+            shift.setEmployee(user);
+            shiftRepository.save(shift);
+        }
+    }
+
+    private Map<Long, Integer> hoursWorkedOutside(LocalDate start, LocalDate end, YearMonth yearMonth) {
+        List<Shift> allShift = shiftRepository.findByDateBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth());
+
+        Map<Long, Integer> hoursWorked = new HashMap<>();
+        for (Shift shift : allShift) {
+            if(shift.getDate().isBefore(start) || shift.getDate().isAfter(end)) {
+                hoursWorked.merge(shift.getUser().getId(), 8, Integer::sum);
+            }
+        }
+        return hoursWorked;
     }
 }

@@ -226,4 +226,41 @@ export class MainPageComponent implements OnInit {
   navigateToWorkRequest() {
     this.router.navigate(['/work-request']);
   }
+
+  get ganttDays(): number[] {
+    const year = this.selectedMonth.getFullYear();
+    const month = this.selectedMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  }
+
+  ganttShiftType(day: number): string | null {
+    const year = this.selectedMonth.getFullYear();
+    const month = this.selectedMonth.getMonth();
+    const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    for (const s of this.monthShifts) {
+      const dateStr = (s.date || s.startAtDate || '').substring(0, 10);
+      if (dateStr === dayStr) {
+        return s.shiftType;
+      }
+    }
+    return null;
+  }
+
+  ganttCellClass(day: number): string {
+    const type = this.ganttShiftType(day);
+    if (!type) return 'gantt-cell';
+    return 'gantt-cell gantt-' + type.toLowerCase();
+  }
+
+  ganttCellLabel(day: number): string {
+    const type = this.ganttShiftType(day);
+    switch (type) {
+      case 'MORNING': return 'D';
+      case 'AFTERNOON': return 'DU';
+      case 'NIGHT': return 'É';
+      default: return '';
+    }
+  }
 }

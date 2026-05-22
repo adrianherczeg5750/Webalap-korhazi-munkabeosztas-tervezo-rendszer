@@ -8,27 +8,40 @@ staffPerShift = data["staffPerShift"]
 employees = data["employees"]
 leaveDays = data["leaveDays"]
 workRequests = data["workRequests"]
+fixedAssignments = data.get("fixedAssignments", [])
 
-year, mon = map(int, month.split("-"))
-start = date(year, mon, 1)
-
-if mon == 12:
-    end = date(year + 1, 1, 1) - timedelta(days=1)
-else:
-    end = date(year, mon + 1, 1) - timedelta(days=1)
+start = date.fromisoformat(data["startDate"])
+end = date.fromisoformat(data["endDate"])
 
 shfitTypes = ["MORNING", "AFTERNOON", "NIGHT"]
 
+preHours = data.get("hoursWorked", {})
 hoursWorked = {}
 for emp in employees:
-    hoursWorked[str(emp["id"])] = 0
+    hoursWorked[str(emp["id"])] = preHours.get(str(emp["id"]), 0)
+
+fixedCounts = {}
+fixedUsers = {}
+for fixed in fixedAssignments:
+    key = fixed["date"] + "_" + fixed["shiftType"]
+    fixedCounts[key] = fixedCounts.get(key, 0) + 1
+    fixedUsers.setdefault(fixed["date"], set()).add(str(fixed["userId"]))
+    hoursWorked[str(fixed["userId"])] = hoursWorked.get(str(fixed["userId"]), 0) + 8
 
 
-def is_valid(emp, dateStr, assignedToday):
+nightShiftPrevDay = set()
+for fixed in fixedAssignments:
+    if fixed["shiftType"] == "NIGHT" and fixed["date"] == (start - timedelta(days=1)).isoformat():
+        nightShiftPrevDay.add(str(fixed["userId"]))
+
+
+def is_valid(emp, dateStr, assignedToday, shiftType, nightPrev):
     empId = str(emp["id"])
     if empId in assignedToday:
         return False
     if dateStr in leaveDays.get(empId, []):
+        return False
+    if shiftType == "MORNING" and empId in nightPrev:
         return False
     return True
 
@@ -42,12 +55,20 @@ current = start
 
 while current <= end:
     dateStr = current.isoformat()
-    assignedToday = set()
+    assignedToday = set(fixedUsers.get(dateStr, set()))
+    nightShiftToday = set()
+    for fixed in fixedAssignments:
+        if fixed["date"] == dateStr and fixed["shiftType"] == "NIGHT":
+            nightShiftToday.add(str(fixed["userId"]))
+
     for shiftType in shfitTypes:
-        for staff in range(staffPerShift):
+        slotKey = dateStr + "_" + shiftType
+        alreadyFilled = fixedCounts.get(slotKey, 0)
+        remaining = staffPerShift - alreadyFilled
+        for staff in range(remaining):
             candidates = []
             for emp in employees:
-                if is_valid(emp, dateStr, assignedToday):
+                if is_valid(emp, dateStr, assignedToday, shiftType, nightShiftPrevDay):
                     candidates.append(emp)
 
             if not candidates:
@@ -82,7 +103,10 @@ while current <= end:
 
             assignedToday.add(selId)
             hoursWorked[selId] += 8
+            if shiftType == "NIGHT":
+                nightShiftToday.add(selId)
 
+    nightShiftPrevDay = nightShiftToday
     current += timedelta(days=1)
 
 json.dump(result, sys.stdout)

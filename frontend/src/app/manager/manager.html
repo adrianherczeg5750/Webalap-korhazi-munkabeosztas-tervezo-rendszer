@@ -11,6 +11,15 @@
       Beosztás generálása
     </button>
 
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="openPartialModal()"
+      [disabled]="!isCurrentMonthGenerated"
+    >
+      Részleges újragenerálás
+    </button>
+
     <button type="button" class="btn" (click)="logout()">
       Kijelentkezés
     </button>
@@ -125,6 +134,71 @@
     </tbody>
   </table>
 
+  @if (monthShifts.length > 0) {
+    <h3 class="section-title">Gantt nézet</h3>
+    <div class="gantt-container">
+      <table class="gantt-table">
+        <thead>
+          <tr>
+            <th class="gantt-employee">Dolgozó</th>
+            @for (day of ganttDays; track day) {
+              <th>{{ day }}</th>
+            }
+            <th class="gantt-hours-header">Óra</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (emp of ganttEmployees; track emp) {
+            <tr>
+              <td class="gantt-employee">{{ emp }}</td>
+              @for (day of ganttDays; track day) {
+                <td [class]="ganttCellClass(emp, day)">{{ ganttCellLabel(emp, day) }}</td>
+              }
+              <td class="gantt-hours" [class.hours-ok]="hoursStatus(emp) === 'ok'" [class.hours-warning]="hoursStatus(emp) === 'warning'" [class.hours-border]="hoursStatus(emp) === 'border'">{{ ganttTotalHours(emp) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="gantt-legend">
+      <div class="gantt-legend-item">
+        <div class="gantt-legend-color gantt-morning"></div>
+        <span>D – Délelőtt (00:00-08:00)</span>
+      </div>
+      <div class="gantt-legend-item">
+        <div class="gantt-legend-color gantt-afternoon"></div>
+        <span>DU – Délután (08:00-16:00)</span>
+      </div>
+      <div class="gantt-legend-item">
+        <div class="gantt-legend-color gantt-night"></div>
+        <span>É – Éjszaka (16:00-23:59)</span>
+      </div>
+    </div>
+
+    <h3 class="section-title">Havi munkaórák</h3>
+    <div class="hours-chart-info">
+      Átlag: <strong>{{ averageHoursPerEmployee | number:'1.0-0' }} óra/fő</strong>
+      &nbsp;|&nbsp; Elfogadható sáv: <strong>{{ hoursLowerBound | number:'1.0-0' }} – {{ hoursUpperBound | number:'1.0-0' }} óra</strong>
+    </div>
+    <div class="hours-chart">
+      @for (emp of ganttEmployees; track emp) {
+        <div class="hours-chart-row">
+          <span class="hours-chart-name">{{ emp }}</span>
+          <div class="hours-chart-bar-container">
+            <div class="hours-chart-bar" [class.bar-ok]="hoursStatus(emp) === 'ok'" [class.bar-warning]="hoursStatus(emp) === 'warning'" [class.bar-border]="hoursStatus(emp) === 'border'" [style.width.%]="hoursBarWidth(emp)">
+              <span class="hours-chart-value">{{ ganttTotalHours(emp) }} óra</span>
+            </div>
+          </div>
+        </div>
+      }
+      <div class="hours-chart-axis">
+        @for (tick of hoursChartTicks; track tick) {
+          <span class="hours-chart-tick" [style.left.%]="(tick / maxEmployeeHours) * 100">{{ tick }}</span>
+        }
+      </div>
+    </div>
+  }
+
   <table class="table table-striped table-bordered mt-3">
     <thead>
     <tr>
@@ -181,6 +255,59 @@
       <div class="modal-actions">
         <button type="button" class="ghost" (click)="cancelGenerate()">Mégse</button>
         <button type="button" class="btn btn-primary" (click)="confirmGenerate()">Generálás</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (partialModalVisible) {
+  <div class="modal-backdrop" (click)="cancelPartial()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Részleges újragenerálás</h3>
+
+      <div class="modal-field">
+        <label for="partialFrom">Naptól</label>
+        <select id="partialFrom" [(ngModel)]="partialFrom">
+          @for (day of ganttDays; track day) {
+            <option [ngValue]="day">{{ day }}.</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-field">
+        <label for="partialTo">Napig</label>
+        <select id="partialTo" [(ngModel)]="partialTo">
+          @for (day of ganttDays; track day) {
+            <option [ngValue]="day">{{ day }}.</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-field">
+        <label for="partialStaff">Fő / műszak</label>
+        <select id="partialStaff" [(ngModel)]="staffPerShift">
+          <option [ngValue]="2">2 fős műszak</option>
+          <option [ngValue]="3">3 fős műszak</option>
+          <option [ngValue]="4">4 fős műszak</option>
+        </select>
+      </div>
+
+      <div class="modal-field">
+        <label for="partialMethod">Generálási módszer</label>
+        <select id="partialMethod" [(ngModel)]="generationMethod">
+          @for (m of generationMethods; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </div>
+
+      @if (partialFrom > partialTo) {
+        <div class="error-message">A kezdő nap nem lehet nagyobb a végnapnál!</div>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="ghost" (click)="cancelPartial()">Mégse</button>
+        <button type="button" class="btn btn-primary" (click)="confirmPartial()" [disabled]="partialFrom > partialTo">Újragenerálás</button>
       </div>
     </div>
   </div>
