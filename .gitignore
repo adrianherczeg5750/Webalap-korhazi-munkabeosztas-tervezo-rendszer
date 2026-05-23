@@ -44,8 +44,6 @@ nb-configuration.xml
 # TLS Certificates
 .certs/
 
-# JWT RSA Keys
-*.pem
 
 # Angular
 frontend/node_modules/
