@@ -262,7 +262,6 @@ export class ManagerComponent implements OnInit {
     });
   }
 
-  // Gantt chart
   get ganttDays(): number[] {
     const year = this.selectedMonthAndYear.getFullYear();
     const month = this.selectedMonthAndYear.getMonth();

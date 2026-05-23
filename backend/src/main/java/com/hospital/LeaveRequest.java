@@ -48,7 +48,6 @@ public class LeaveRequest {
     @Column(name = "decided_at")
     private Instant decidedAt;
 
-    /** Manager (or higher role) who decided this request */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "decided_by_user_id")
     private User decidedBy;
